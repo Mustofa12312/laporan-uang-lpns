@@ -63,9 +63,19 @@ export default function Transactions() {
         </div>
         <div className="flex gap-2">
           <Select className="w-[140px] shadow-sm hidden sm:flex">
-            <option value="all">Bulan Ini</option>
-            <option value="aug">Agustus 2026</option>
-            <option value="jul">Juli 2026</option>
+            <option value="all">Semua Bulan</option>
+            <option value="01">Januari 2026</option>
+            <option value="02">Februari 2026</option>
+            <option value="03">Maret 2026</option>
+            <option value="04">April 2026</option>
+            <option value="05">Mei 2026</option>
+            <option value="06">Juni 2026</option>
+            <option value="07">Juli 2026</option>
+            <option value="08">Agustus 2026</option>
+            <option value="09">September 2026</option>
+            <option value="10">Oktober 2026</option>
+            <option value="11">November 2026</option>
+            <option value="12">Desember 2026</option>
           </Select>
           <Button 
             variant={showFilters ? "secondary" : "outline"} 

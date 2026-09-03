@@ -51,7 +51,10 @@ export default function NewTransaction() {
       amount: parseInt(amount),
       type: txType,
       branch: activeBranch,
-      notes
+      notes,
+      volume,
+      unit,
+      unitPrice: parseInt(unitPrice)
     });
 
     setTimeout(() => {

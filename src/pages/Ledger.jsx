@@ -56,6 +56,33 @@ export default function Ledger() {
 
   const runningLedger = calculatedLedger.filter(e => e.desc.toLowerCase().includes(searchTerm.toLowerCase()));
 
+  const handleExportCSV = () => {
+    const headers = ["Tanggal", "Referensi", "Uraian", "Debit", "Kredit", "Saldo"];
+    const csvContent = [
+      headers.join(","),
+      ...runningLedger.map(e => [
+        `"${e.date}"`,
+        `"${e.ref}"`,
+        `"${e.desc}"`,
+        e.debit,
+        e.credit,
+        e.balance
+      ].join(","))
+    ].join("\n");
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement("a");
+    if (link.download !== undefined) {
+      const url = URL.createObjectURL(blob);
+      link.setAttribute("href", url);
+      link.setAttribute("download", `Buku_Besar_LPNS_${new Date().getTime()}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -66,10 +93,10 @@ export default function Ledger() {
           <p className="text-muted-foreground mt-1">Laporan jurnal umum dan saldo berjalan</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" className="shadow-sm">
+          <Button variant="outline" className="shadow-sm" onClick={handleExportCSV}>
             <Download className="mr-2 h-4 w-4" /> Export CSV
           </Button>
-          <Button variant="outline" className="shadow-sm">
+          <Button variant="outline" className="shadow-sm" onClick={() => window.print()}>
             <Printer className="mr-2 h-4 w-4" /> Cetak Jurnal
           </Button>
         </div>
@@ -81,8 +108,18 @@ export default function Ledger() {
             <div className="space-y-1">
               <label className="text-xs font-medium text-muted-foreground">Bulan</label>
               <Select defaultValue="09">
-                <option value="09">September</option>
+                <option value="01">Januari</option>
+                <option value="02">Februari</option>
+                <option value="03">Maret</option>
+                <option value="04">April</option>
+                <option value="05">Mei</option>
+                <option value="06">Juni</option>
+                <option value="07">Juli</option>
                 <option value="08">Agustus</option>
+                <option value="09">September</option>
+                <option value="10">Oktober</option>
+                <option value="11">November</option>
+                <option value="12">Desember</option>
               </Select>
             </div>
             <div className="space-y-1">
