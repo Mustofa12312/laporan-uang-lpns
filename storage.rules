@@ -1,0 +1,25 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    
+    // Check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Check if file is image or pdf and under 5MB
+    function isValidProof() {
+      return request.resource.size < 5 * 1024 * 1024 &&
+             (request.resource.contentType.matches('image/.*') || 
+              request.resource.contentType == 'application/pdf');
+    }
+
+    match /proofs/{fileName} {
+      // All authenticated users can view proofs
+      allow read: if isAuthenticated();
+      
+      // Anyone who can create transactions can upload valid proofs
+      allow write: if isAuthenticated() && isValidProof();
+    }
+  }
+}
