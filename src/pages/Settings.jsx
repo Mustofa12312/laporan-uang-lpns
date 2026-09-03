@@ -21,10 +21,13 @@ export default function Settings() {
 
   const { theme, setTheme } = useTheme();
   
-  const { addTransaction } = useStore();
+  const { addTransaction, closeBook } = useStore();
   const [incomeTitle, setIncomeTitle] = useState("");
   const [incomeAmount, setIncomeAmount] = useState("");
   const [incomeSuccess, setIncomeSuccess] = useState(false);
+  
+  const [periodName, setPeriodName] = useState("");
+  const [closeSuccess, setCloseSuccess] = useState(false);
 
   const handleAddIncome = () => {
     if(!incomeTitle || !incomeAmount) return;
@@ -43,6 +46,14 @@ export default function Settings() {
     setIncomeAmount("");
     setIncomeSuccess(true);
     setTimeout(() => setIncomeSuccess(false), 2000);
+  };
+
+  const handleCloseBook = () => {
+    if(!periodName) return;
+    closeBook(periodName);
+    setPeriodName("");
+    setCloseSuccess(true);
+    setTimeout(() => setCloseSuccess(false), 3000);
   };
 
   return (
@@ -200,6 +211,29 @@ export default function Settings() {
                 </CardContent>
                 <CardFooter>
                   <Button onClick={handleAddIncome} className="bg-green-600 hover:bg-green-700 w-full sm:w-auto text-white">Tambahkan ke Saldo</Button>
+                </CardFooter>
+              </Card>
+
+              <Card className="border-0 shadow-sm border-destructive/20 mt-6">
+                <CardHeader>
+                  <CardTitle className="text-destructive flex items-center gap-2">Tutup Buku (Periode)</CardTitle>
+                  <CardDescription>
+                    Arsipkan transaksi saat ini dan kembalikan saldo ke 0 (Nol) untuk memulai pencatatan periode baru (Misal: Tutup Triwulan).
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {closeSuccess && (
+                    <div className="p-3 bg-red-100 text-red-700 rounded-md text-sm font-medium mb-4">
+                      Tutup Buku berhasil! Semua transaksi telah diarsipkan dan saldo kembali menjadi 0.
+                    </div>
+                  )}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Nama Periode Arsip</label>
+                    <Input placeholder="Misal: Laporan Triwulan 1 (Jan - Mar 2026)" value={periodName} onChange={(e) => setPeriodName(e.target.value)} />
+                  </div>
+                </CardContent>
+                <CardFooter>
+                  <Button onClick={handleCloseBook} variant="destructive" className="w-full sm:w-auto">Tutup Buku & Reset Data</Button>
                 </CardFooter>
               </Card>
             </motion.div>

@@ -22,6 +22,25 @@ export const useStore = create(
         transactions: state.transactions.filter(t => t.id !== id)
       })),
 
+      // Archives State
+      archives: [],
+      closeBook: (periodName) => set((state) => {
+        // Only archive if there are transactions
+        if (state.transactions.length === 0) return state;
+        
+        const newArchive = {
+          id: `ARCHIVE-${Date.now()}`,
+          periodName,
+          closedAt: new Date().toISOString(),
+          transactions: [...state.transactions]
+        };
+        
+        return {
+          archives: [newArchive, ...state.archives],
+          transactions: [] // Reset current transactions to 0
+        };
+      }),
+
       // Categories State
       categories: [
         { id: 1, name: "ATK", status: "ACTIVE" },
