@@ -1,5 +1,8 @@
-import React, { createContext, useContext } from 'react';
-import { useStore } from '../store/useStore';
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import { auth, db } from '../lib/firebase/config';
+import { onAuthStateChanged } from 'firebase/auth';
+import { doc, getDoc } from 'firebase/firestore';
+import { loginUser, logoutUser } from '../services/auth.service';
 
 const AuthContext = createContext(null);
 
@@ -10,19 +13,47 @@ export const useAuth = () => {
 };
 
 export const AuthProvider = ({ children }) => {
-  const currentUser = useStore((s) => s.currentUser);
-  const loginUser = useStore((s) => s.loginUser);
-  const logoutUser = useStore((s) => s.logoutUser);
+  const [currentUser, setCurrentUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        try {
+          // Fetch additional user data from Firestore
+          const userDoc = await getDoc(doc(db, 'users', user.uid));
+          if (userDoc.exists()) {
+            setCurrentUser({ uid: user.uid, email: user.email, ...userDoc.data() });
+          } else {
+            // Fallback if document doesn't exist yet
+            setCurrentUser({ uid: user.uid, email: user.email, name: user.displayName || 'User', role: 'UNKNOWN' });
+          }
+        } catch (error) {
+          console.error("Error fetching user data:", error);
+          setCurrentUser({ uid: user.uid, email: user.email });
+        }
+      } else {
+        setCurrentUser(null);
+      }
+      setLoading(false);
+    });
+
+    return unsubscribe;
+  }, []);
+
+  const login = async (email, password) => {
+    return await loginUser(email, password);
+  };
+
+  const logout = async () => {
+    await logoutUser();
+  };
 
   const isAuthenticated = !!currentUser;
 
-  const login = (email, password) => {
-    return loginUser(email, password);
-  };
-
-  const logout = () => {
-    logoutUser();
-  };
+  if (loading) {
+    return <div className="h-screen w-screen flex items-center justify-center">Memuat...</div>;
+  }
 
   return (
     <AuthContext.Provider value={{ currentUser, isAuthenticated, login, logout }}>
@@ -30,3 +61,4 @@ export const AuthProvider = ({ children }) => {
     </AuthContext.Provider>
   );
 };
+

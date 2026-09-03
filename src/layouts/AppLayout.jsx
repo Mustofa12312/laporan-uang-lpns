@@ -16,6 +16,7 @@ import { Button } from "../components/ui/button";
 import CommandPalette from "../components/CommandPalette";
 import { useStore } from "../store/useStore";
 import { useAuth } from "../contexts/AuthContext";
+import { useFirebaseSync } from "../hooks/useFirebaseSync";
 
 export default function AppLayout() {
   const { isAuthenticated, currentUser, logout } = useAuth();
@@ -23,6 +24,9 @@ export default function AppLayout() {
   const [isCommandOpen, setIsCommandOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
+
+  // Initialize real-time Firebase syncing
+  useFirebaseSync();
 
   // Auth Guard: redirect to login if not authenticated
   if (!isAuthenticated) {
