@@ -8,6 +8,8 @@ import { useTheme } from "../contexts/ThemeContext";
 import { useAuth } from "../contexts/AuthContext";
 import { useStore } from "../store/useStore";
 import { addCategory, updateCategory, deleteCategory } from "../services/category.service";
+import { closeBook } from "../services/report.service";
+import { addTransaction } from "../services/transaction.service";
 
 export default function Settings() {
   const [activeTab, setActiveTab] = useState("profile");
@@ -15,7 +17,7 @@ export default function Settings() {
   const { currentUser } = useAuth();
   
   const { 
-    addTransaction, closeBook, archives, 
+    archives, 
     categories,
     budget, setBudget
   } = useStore();
@@ -38,34 +40,43 @@ export default function Settings() {
   const [editBudget, setEditBudget] = useState(false);
   const [budgetInput, setBudgetInput] = useState(budget);
 
-  const handleAddIncome = () => {
+  const handleAddIncome = async () => {
     if(!incomeTitle || !incomeAmount) return;
     
-    addTransaction({
-      name: incomeTitle,
-      category: "DANA KAMPUS",
-      date: new Date().toISOString().split('T')[0],
-      amount: parseInt(incomeAmount),
-      type: "income",
-      branch: "Pusat",
-      notes: "Injeksi dana manual dari pengaturan",
-      volume: 1,
-      unit: "Paket",
-      unitPrice: parseInt(incomeAmount)
-    });
-    
-    setIncomeTitle("");
-    setIncomeAmount("");
-    setIncomeSuccess(true);
-    setTimeout(() => setIncomeSuccess(false), 2000);
+    try {
+      await addTransaction({
+        name: incomeTitle,
+        category: "DANA KAMPUS",
+        date: new Date().toISOString().split('T')[0],
+        amount: parseInt(incomeAmount),
+        type: "income",
+        branch: "Pusat",
+        notes: "Injeksi dana manual dari pengaturan",
+        volume: 1,
+        unit: "Paket",
+        unitPrice: parseInt(incomeAmount)
+      }, currentUser);
+      
+      setIncomeTitle("");
+      setIncomeAmount("");
+      setIncomeSuccess(true);
+      setTimeout(() => setIncomeSuccess(false), 2000);
+    } catch (error) {
+      console.error("Gagal tambah saldo:", error);
+    }
   };
 
-  const handleCloseBook = () => {
+  const handleCloseBook = async () => {
     if(!periodName) return;
-    closeBook(periodName);
-    setPeriodName("");
-    setCloseSuccess(true);
-    setTimeout(() => setCloseSuccess(false), 3000);
+    try {
+      await closeBook(periodName, currentUser);
+      setPeriodName("");
+      setCloseSuccess(true);
+      setTimeout(() => setCloseSuccess(false), 3000);
+    } catch (error) {
+      console.error("Gagal tutup buku:", error);
+      alert(error.message);
+    }
   };
 
   const handleAddCategory = async () => {
