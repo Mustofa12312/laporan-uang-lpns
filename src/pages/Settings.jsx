@@ -2,32 +2,40 @@ import { useState } from "react";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "../components/ui/card";
-import { Settings as SettingsIcon, Key, Tag, User, Save, Trash2, Plus, Wallet, ArrowUpCircle } from "lucide-react";
+import { Settings as SettingsIcon, Tag, User, Save, Trash2, Plus, Wallet, ArrowUpCircle, Check, X, Edit2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useTheme } from "../contexts/ThemeContext";
+import { useAuth } from "../contexts/AuthContext";
 import { useStore } from "../store/useStore";
 
 export default function Settings() {
   const [activeTab, setActiveTab] = useState("profile");
-
-  const [categories, setCategories] = useState([
-    { id: 1, name: "ATK", status: "ACTIVE" },
-    { id: 2, name: "HONORIUM", status: "ACTIVE" },
-    { id: 3, name: "TRANSPORTASI", status: "ACTIVE" },
-    { id: 4, name: "PERLENGKAPAN", status: "ACTIVE" },
-    { id: 5, name: "KONSUMSI", status: "ACTIVE" },
-    { id: 6, name: "LAINNYA", status: "INACTIVE" },
-  ]);
-
   const { theme, setTheme } = useTheme();
+  const { currentUser } = useAuth();
   
-  const { addTransaction, closeBook, archives } = useStore();
+  const { 
+    addTransaction, closeBook, archives, 
+    categories, addCategory, updateCategory, deleteCategory,
+    budget, setBudget
+  } = useStore();
+
+  // Income injection
   const [incomeTitle, setIncomeTitle] = useState("");
   const [incomeAmount, setIncomeAmount] = useState("");
   const [incomeSuccess, setIncomeSuccess] = useState(false);
   
+  // Close book
   const [periodName, setPeriodName] = useState("");
   const [closeSuccess, setCloseSuccess] = useState(false);
+
+  // Category management
+  const [newCategoryName, setNewCategoryName] = useState("");
+  const [editingCategoryId, setEditingCategoryId] = useState(null);
+  const [editingCategoryName, setEditingCategoryName] = useState("");
+
+  // Budget
+  const [editBudget, setEditBudget] = useState(false);
+  const [budgetInput, setBudgetInput] = useState(budget);
 
   const handleAddIncome = () => {
     if(!incomeTitle || !incomeAmount) return;
@@ -39,7 +47,10 @@ export default function Settings() {
       amount: parseInt(incomeAmount),
       type: "income",
       branch: "Pusat",
-      notes: "Injeksi dana manual dari pengaturan"
+      notes: "Injeksi dana manual dari pengaturan",
+      volume: 1,
+      unit: "Paket",
+      unitPrice: parseInt(incomeAmount)
     });
     
     setIncomeTitle("");
@@ -55,6 +66,31 @@ export default function Settings() {
     setCloseSuccess(true);
     setTimeout(() => setCloseSuccess(false), 3000);
   };
+
+  const handleAddCategory = () => {
+    if (!newCategoryName.trim()) return;
+    addCategory(newCategoryName.trim());
+    setNewCategoryName("");
+  };
+
+  const handleSaveCategory = (id) => {
+    if (!editingCategoryName.trim()) return;
+    updateCategory(id, { name: editingCategoryName.trim().toUpperCase() });
+    setEditingCategoryId(null);
+    setEditingCategoryName("");
+  };
+
+  const handleToggleCategoryStatus = (id, currentStatus) => {
+    updateCategory(id, { status: currentStatus === "ACTIVE" ? "INACTIVE" : "ACTIVE" });
+  };
+
+  const handleSaveBudget = () => {
+    setBudget(parseInt(budgetInput) || 0);
+    setEditBudget(false);
+  };
+
+  const formatRupiah = (amount) => 
+    new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(amount);
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto pb-10">
@@ -74,7 +110,7 @@ export default function Settings() {
             className="w-full justify-start font-medium"
             onClick={() => setActiveTab("profile")}
           >
-            <User className="mr-2 h-4 w-4" /> Profil & Keamanan
+            <User className="mr-2 h-4 w-4" /> Profil
           </Button>
           <Button 
             variant={activeTab === "categories" ? "secondary" : "ghost"} 
@@ -113,46 +149,30 @@ export default function Settings() {
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
                     <label className="text-sm font-medium">Nama Lengkap</label>
-                    <Input defaultValue="Sekretaris LPNS" readOnly className="bg-secondary/50" />
+                    <Input defaultValue={currentUser?.name || "—"} readOnly className="bg-secondary/50" />
                   </div>
                   <div className="space-y-2">
                     <label className="text-sm font-medium">Email</label>
-                    <Input defaultValue="sekretaris@lpns.org" readOnly className="bg-secondary/50" />
+                    <Input defaultValue={currentUser?.email || "—"} readOnly className="bg-secondary/50" />
                   </div>
                   <div className="space-y-2">
                     <label className="text-sm font-medium">Peran (Role)</label>
-                    <Input defaultValue="SEKRETARIS" readOnly className="bg-secondary/50 font-bold" />
+                    <Input defaultValue={currentUser?.role || "—"} readOnly className="bg-secondary/50 font-bold" />
                   </div>
                 </CardContent>
               </Card>
 
-              <Card className="border-0 shadow-sm">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2"><Key className="w-5 h-5"/> Ganti Password</CardTitle>
-                  <CardDescription>Pastikan password baru Anda aman.</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Password Lama</label>
-                    <Input type="password" placeholder="••••••••" />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Password Baru</label>
-                    <Input type="password" placeholder="••••••••" />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Konfirmasi Password Baru</label>
-                    <Input type="password" placeholder="••••••••" />
-                  </div>
+              <Card className="border-0 shadow-sm bg-secondary/20">
+                <CardContent className="p-4">
+                  <p className="text-sm text-muted-foreground">
+                    ℹ️ Ganti password membutuhkan integrasi Firebase Auth. Fitur ini akan tersedia setelah backend Firebase dikonfigurasi.
+                  </p>
                 </CardContent>
-                <CardFooter>
-                  <Button className="w-full sm:w-auto"><Save className="w-4 h-4 mr-2" /> Simpan Password</Button>
-                </CardFooter>
               </Card>
             </motion.div>
           )}
 
-          {/* Categories Tab */}
+          {/* Categories Tab — Now using global store */}
           {activeTab === "categories" && (
             <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}>
               <Card className="border-0 shadow-sm">
@@ -161,25 +181,77 @@ export default function Settings() {
                     <CardTitle>Kategori Transaksi</CardTitle>
                     <CardDescription>Tambah atau kelola kategori pengeluaran Anda.</CardDescription>
                   </div>
-                  <Button size="sm"><Plus className="w-4 h-4 mr-2"/> Tambah</Button>
                 </CardHeader>
                 <CardContent>
+                  {/* Add new category */}
+                  <div className="flex gap-2 mb-4">
+                    <Input 
+                      placeholder="Nama kategori baru..." 
+                      value={newCategoryName} 
+                      onChange={(e) => setNewCategoryName(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && handleAddCategory()}
+                    />
+                    <Button onClick={handleAddCategory} disabled={!newCategoryName.trim()}>
+                      <Plus className="w-4 h-4 mr-2"/>Tambah
+                    </Button>
+                  </div>
+
                   <div className="space-y-3">
                     {categories.map((cat) => (
                       <div key={cat.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-secondary/20 transition-colors">
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-3 flex-1">
                           <div className={`w-2 h-2 rounded-full ${cat.status === 'ACTIVE' ? 'bg-green-500' : 'bg-destructive'}`}></div>
-                          <span className="font-medium text-sm">{cat.name}</span>
+                          {editingCategoryId === cat.id ? (
+                            <div className="flex items-center gap-2 flex-1">
+                              <Input 
+                                className="h-8 text-sm"
+                                value={editingCategoryName} 
+                                onChange={(e) => setEditingCategoryName(e.target.value)}
+                                onKeyDown={(e) => e.key === 'Enter' && handleSaveCategory(cat.id)}
+                                autoFocus
+                              />
+                              <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-green-600" onClick={() => handleSaveCategory(cat.id)}>
+                                <Check className="w-4 h-4" />
+                              </Button>
+                              <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={() => setEditingCategoryId(null)}>
+                                <X className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          ) : (
+                            <span className="font-medium text-sm">{cat.name}</span>
+                          )}
+                          {cat.status === 'INACTIVE' && (
+                            <span className="text-[10px] text-destructive bg-destructive/10 px-1.5 py-0.5 rounded font-bold">NONAKTIF</span>
+                          )}
                         </div>
-                        <div className="flex items-center gap-2">
-                          <Button variant="ghost" size="sm" className="text-xs">Edit</Button>
-                          <Button variant="ghost" size="sm" className="text-xs text-destructive hover:bg-destructive/10"><Trash2 className="w-4 h-4"/></Button>
-                        </div>
+                        {editingCategoryId !== cat.id && (
+                          <div className="flex items-center gap-1">
+                            <Button 
+                              variant="ghost" size="sm" className="text-xs h-8"
+                              onClick={() => { setEditingCategoryId(cat.id); setEditingCategoryName(cat.name); }}
+                            >
+                              <Edit2 className="w-3 h-3 mr-1" />Edit
+                            </Button>
+                            <Button 
+                              variant="ghost" size="sm" className="text-xs h-8"
+                              onClick={() => handleToggleCategoryStatus(cat.id, cat.status)}
+                            >
+                              {cat.status === 'ACTIVE' ? 'Nonaktifkan' : 'Aktifkan'}
+                            </Button>
+                            <Button 
+                              variant="ghost" size="sm" 
+                              className="text-xs text-destructive hover:bg-destructive/10 h-8 w-8 p-0"
+                              onClick={() => deleteCategory(cat.id)}
+                            >
+                              <Trash2 className="w-4 h-4"/>
+                            </Button>
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>
                   <p className="text-xs text-muted-foreground mt-4">
-                    Catatan: Kategori tidak dapat dihapus permanen jika terikat dengan transaksi lama, namun dapat disembunyikan.
+                    Catatan: Kategori yang dinonaktifkan tidak akan muncul saat mencatat transaksi baru.
                   </p>
                 </CardContent>
               </Card>
@@ -189,6 +261,28 @@ export default function Settings() {
           {/* Balance Tab */}
           {activeTab === "balance" && (
             <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}>
+              {/* Budget Setting */}
+              <Card className="border-0 shadow-sm mb-6">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">💰 Target Anggaran</CardTitle>
+                  <CardDescription>Atur target anggaran pengeluaran untuk monitoring di Dashboard.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {editBudget ? (
+                    <div className="flex gap-2">
+                      <Input type="number" value={budgetInput} onChange={(e) => setBudgetInput(e.target.value)} />
+                      <Button onClick={handleSaveBudget}>Simpan</Button>
+                      <Button variant="outline" onClick={() => { setEditBudget(false); setBudgetInput(budget); }}>Batal</Button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-between">
+                      <span className="text-xl font-bold text-foreground">{formatRupiah(budget)}</span>
+                      <Button variant="outline" size="sm" onClick={() => setEditBudget(true)}>Ubah</Button>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
               <Card className="border-0 shadow-sm border-green-500/20">
                 <CardHeader>
                   <CardTitle className="text-green-600 dark:text-green-500 flex items-center gap-2"><ArrowUpCircle className="w-5 h-5"/> Injeksi Dana (Pemasukan)</CardTitle>

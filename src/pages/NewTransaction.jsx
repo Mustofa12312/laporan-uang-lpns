@@ -5,7 +5,7 @@ import { Input } from "../components/ui/input";
 import { Select } from "../components/ui/select";
 import { Textarea } from "../components/ui/textarea";
 import { Card, CardContent } from "../components/ui/card";
-import { ArrowLeft, Check, ArrowDownCircle, ArrowUpCircle } from "lucide-react";
+import { ArrowLeft, Check, Plus } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "../utils/utils";
 import { useStore } from "../store/useStore";
@@ -32,6 +32,14 @@ export default function NewTransaction() {
 
   const { addTransaction, activeBranch, categories } = useStore();
 
+  const resetForm = () => {
+    setName("");
+    setVolume(1);
+    setUnitPrice("");
+    setNotes("");
+    setShowSuccess(false);
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!category || !name || !amount) return;
@@ -55,15 +63,12 @@ export default function NewTransaction() {
     setTimeout(() => {
       setIsLoading(false);
       setShowSuccess(true);
-      setTimeout(() => {
-        navigate("/transactions");
-      }, 1500);
     }, 600);
   };
 
   if (showSuccess) {
     return (
-      <div className="flex flex-col items-center justify-center h-[70vh]">
+      <div className="flex flex-col items-center justify-center min-h-[60vh]">
         <motion.div 
           initial={{ scale: 0 }} 
           animate={{ scale: 1 }} 
@@ -80,22 +85,31 @@ export default function NewTransaction() {
         </motion.h2>
         <motion.p 
           initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }}
-          className="text-muted-foreground mt-2"
+          className="text-muted-foreground mt-2 mb-8"
         >
-          Mengarahkan kembali...
+          Transaksi telah berhasil ditambahkan ke sistem.
         </motion.p>
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="flex gap-4">
+          <Button variant="outline" onClick={() => navigate("/transactions")}>
+            Ke Daftar Transaksi
+          </Button>
+          <Button onClick={resetForm} className="shadow-lg shadow-primary/25">
+            <Plus className="w-4 h-4 mr-2" /> Catat Lagi
+          </Button>
+        </motion.div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
+    <div className="max-w-2xl mx-auto space-y-6 pb-10">
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="shrink-0">
           <ArrowLeft className="w-5 h-5" />
         </Button>
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-foreground">Catat Transaksi</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">Tambah catatan arus kas baru</p>
         </div>
       </div>
 
@@ -104,6 +118,26 @@ export default function NewTransaction() {
           <CardContent className="p-6">
             <form onSubmit={handleSubmit} className="space-y-6">
               
+              {/* Type Toggle */}
+              <div className="grid grid-cols-2 gap-2 bg-secondary/30 p-1.5 rounded-xl">
+                <Button 
+                  type="button"
+                  variant={txType === "expense" ? "default" : "ghost"}
+                  className={cn("w-full transition-all duration-300", txType === "expense" && "bg-destructive text-white hover:bg-destructive/90 shadow-md")}
+                  onClick={() => setTxType("expense")}
+                >
+                  Pengeluaran
+                </Button>
+                <Button 
+                  type="button"
+                  variant={txType === "income" ? "default" : "ghost"}
+                  className={cn("w-full transition-all duration-300", txType === "income" && "bg-green-600 text-white hover:bg-green-700 shadow-md")}
+                  onClick={() => setTxType("income")}
+                >
+                  Pemasukan
+                </Button>
+              </div>
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Tanggal <span className="text-destructive">*</span></label>
@@ -147,27 +181,30 @@ export default function NewTransaction() {
                     <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
                       <span className="text-muted-foreground font-medium">Rp</span>
                     </div>
-                    <Input type="number" placeholder="0" className="pl-10" required min="1" value={unitPrice} onChange={e => setUnitPrice(e.target.value)} />
+                    <Input type="number" placeholder="0" className="pl-10 font-medium" required min="1" value={unitPrice} onChange={e => setUnitPrice(e.target.value)} />
                   </div>
                 </div>
               </div>
 
-              <div className="space-y-2 bg-secondary/30 p-4 rounded-xl border border-secondary/50">
+              <div className={cn(
+                "space-y-2 p-5 rounded-xl border transition-colors duration-300", 
+                txType === 'income' ? "bg-green-500/5 border-green-500/20" : "bg-destructive/5 border-destructive/20"
+              )}>
                 <label className="text-sm font-medium text-muted-foreground">Total Nominal (Otomatis)</label>
-                <div className="text-2xl font-bold text-destructive">
+                <div className={cn("text-3xl font-bold tracking-tight", txType === 'income' ? "text-green-600 dark:text-green-500" : "text-destructive")}>
                   {new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(amount)}
                 </div>
               </div>
 
               <div className="space-y-2">
                 <label className="text-sm font-medium">Catatan Tambahan (Opsional)</label>
-                <Textarea placeholder="Detail lebih lanjut..." value={notes} onChange={e => setNotes(e.target.value)} />
+                <Textarea placeholder="Detail lebih lanjut..." value={notes} onChange={e => setNotes(e.target.value)} className="resize-none" />
               </div>
 
 
-              <div className="pt-4 flex gap-3 border-t">
+              <div className="pt-6 flex gap-3 border-t">
                 <Button type="button" variant="outline" className="flex-1" onClick={() => navigate(-1)}>Batal</Button>
-                <Button type="submit" className={cn("flex-1 shadow-lg shadow-primary/25", txType === 'income' && "bg-green-600 hover:bg-green-700")} disabled={isLoading}>
+                <Button type="submit" className={cn("flex-1 shadow-lg", txType === 'income' ? "bg-green-600 hover:bg-green-700 shadow-green-600/25" : "shadow-primary/25")} disabled={isLoading}>
                   {isLoading ? "Menyimpan..." : "Simpan Transaksi"}
                 </Button>
               </div>

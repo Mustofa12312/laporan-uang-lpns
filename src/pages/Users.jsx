@@ -1,29 +1,65 @@
 import { useState } from "react";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
+import { Select } from "../components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../components/ui/card";
-import { Search, UserPlus, Shield, User, Power, Edit } from "lucide-react";
-import { motion } from "framer-motion";
+import { Search, UserPlus, Shield, User, Power, Edit, X, Save } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { useStore } from "../store/useStore";
 
 export default function Users() {
   const [searchTerm, setSearchTerm] = useState("");
+  const { users, addUser, updateUser, deleteUser } = useStore();
 
-  const mockUsers = [
-    { id: 1, name: "Admin Utama", email: "admin@lpns.org", role: "ADMIN", status: "ACTIVE", lastLogin: "03 Sep 2026, 09:00" },
-    { id: 2, name: "Ketua LPNS", email: "ketua@lpns.org", role: "KETUA", status: "ACTIVE", lastLogin: "01 Sep 2026, 14:30" },
-    { id: 3, name: "Sekretaris", email: "sekretaris@lpns.org", role: "SEKRETARIS", status: "ACTIVE", lastLogin: "02 Sep 2026, 10:15" },
-    { id: 4, name: "Bendahara", email: "bendahara@lpns.org", role: "BENDAHARA", status: "ACTIVE", lastLogin: "03 Sep 2026, 11:20" },
-    { id: 5, name: "Mantan Pengurus", email: "mantan@lpns.org", role: "BENDAHARA", status: "INACTIVE", lastLogin: "15 Jan 2026, 08:00" },
-  ];
+  // Modal State
+  const [showModal, setShowModal] = useState(false);
+  const [editingUser, setEditingUser] = useState(null);
+  const [formData, setFormData] = useState({ name: "", email: "", password: "", role: "BENDAHARA" });
 
-  const filtered = mockUsers.filter(u => u.name.toLowerCase().includes(searchTerm.toLowerCase()));
+  const filtered = users.filter(u => 
+    u.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    u.email.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   const RoleBadge = ({ role }) => {
     let color = "bg-secondary text-secondary-foreground";
     if (role === "ADMIN") color = "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400";
     if (role === "KETUA") color = "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400";
+    if (role === "SEKRETARIS") color = "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400";
+    if (role === "BENDAHARA") color = "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400";
     
     return <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${color}`}>{role}</span>;
+  };
+
+  const handleOpenAdd = () => {
+    setEditingUser(null);
+    setFormData({ name: "", email: "", password: "", role: "BENDAHARA" });
+    setShowModal(true);
+  };
+
+  const handleOpenEdit = (user) => {
+    setEditingUser(user);
+    setFormData({ name: user.name, email: user.email, password: "", role: user.role });
+    setShowModal(true);
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!formData.name || !formData.email) return;
+
+    if (editingUser) {
+      const updates = { name: formData.name, email: formData.email, role: formData.role };
+      if (formData.password) updates.password = formData.password;
+      updateUser(editingUser.id, updates);
+    } else {
+      if (!formData.password) return;
+      addUser({ ...formData, status: "ACTIVE", lastLogin: "Belum pernah login" });
+    }
+    setShowModal(false);
+  };
+
+  const handleToggleStatus = (user) => {
+    updateUser(user.id, { status: user.status === "ACTIVE" ? "INACTIVE" : "ACTIVE" });
   };
 
   return (
@@ -35,7 +71,7 @@ export default function Users() {
           </h1>
           <p className="text-muted-foreground mt-1">Manajemen akses aplikasi (Khusus Admin)</p>
         </div>
-        <Button className="shadow-lg shadow-primary/20 hover:scale-105 transition-transform">
+        <Button className="shadow-lg shadow-primary/20 hover:scale-105 transition-transform" onClick={handleOpenAdd}>
           <UserPlus className="mr-2 h-4 w-4" /> Tambah User
         </Button>
       </div>
@@ -78,10 +114,15 @@ export default function Users() {
                     <span className="font-medium text-foreground">{user.lastLogin}</span>
                   </div>
                   <div className="flex gap-1">
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary">
+                    <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary" onClick={() => handleOpenEdit(user)}>
                       <Edit className="h-4 w-4" />
                     </Button>
-                    <Button variant="ghost" size="icon" className={`h-8 w-8 ${user.status === 'INACTIVE' ? 'text-green-500 hover:text-green-600' : 'text-destructive hover:text-destructive'}`}>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className={`h-8 w-8 ${user.status === 'INACTIVE' ? 'text-green-500 hover:text-green-600' : 'text-destructive hover:text-destructive'}`}
+                      onClick={() => handleToggleStatus(user)}
+                    >
                       <Power className="h-4 w-4" />
                     </Button>
                   </div>
@@ -91,6 +132,70 @@ export default function Users() {
           </motion.div>
         ))}
       </div>
+
+      {/* Add/Edit User Modal */}
+      <AnimatePresence>
+        {showModal && (
+          <>
+            <motion.div 
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-background/80 backdrop-blur-sm z-[99]"
+              onClick={() => setShowModal(false)}
+            />
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
+              className="fixed top-[15%] left-1/2 -translate-x-1/2 w-full max-w-md bg-card border shadow-2xl rounded-xl z-[100] overflow-hidden"
+            >
+              <div className="flex items-center justify-between px-6 py-4 border-b bg-secondary/20">
+                <h2 className="text-lg font-bold text-foreground">
+                  {editingUser ? "Edit User" : "Tambah User Baru"}
+                </h2>
+                <Button variant="ghost" size="icon" onClick={() => setShowModal(false)} className="h-8 w-8">
+                  <X className="w-4 h-4" />
+                </Button>
+              </div>
+              <form onSubmit={handleSubmit} className="p-6 space-y-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-muted-foreground">Nama Lengkap</label>
+                  <Input required value={formData.name} onChange={(e) => setFormData(p => ({...p, name: e.target.value}))} />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-muted-foreground">Email</label>
+                  <Input type="email" required value={formData.email} onChange={(e) => setFormData(p => ({...p, email: e.target.value}))} />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-muted-foreground">
+                    Password {editingUser && <span className="text-muted-foreground">(kosongkan jika tidak diubah)</span>}
+                  </label>
+                  <Input 
+                    type="password" 
+                    required={!editingUser} 
+                    value={formData.password} 
+                    onChange={(e) => setFormData(p => ({...p, password: e.target.value}))} 
+                    placeholder={editingUser ? "••••••••" : "Masukkan password"}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-muted-foreground">Role</label>
+                  <Select value={formData.role} onChange={(e) => setFormData(p => ({...p, role: e.target.value}))}>
+                    <option value="ADMIN">Admin</option>
+                    <option value="KETUA">Ketua</option>
+                    <option value="SEKRETARIS">Sekretaris</option>
+                    <option value="BENDAHARA">Bendahara</option>
+                  </Select>
+                </div>
+                <div className="flex gap-3 pt-2">
+                  <Button type="button" variant="outline" className="flex-1" onClick={() => setShowModal(false)}>Batal</Button>
+                  <Button type="submit" className="flex-1">
+                    <Save className="w-4 h-4 mr-2" />
+                    {editingUser ? "Simpan Perubahan" : "Tambah User"}
+                  </Button>
+                </div>
+              </form>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

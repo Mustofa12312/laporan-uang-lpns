@@ -1,15 +1,13 @@
 import { useState } from "react";
-import { Link, Outlet, useLocation } from "react-router-dom";
+import { Link, Outlet, useLocation, Navigate, useNavigate } from "react-router-dom";
 import { 
   LayoutDashboard, 
   Receipt, 
   PieChart, 
   Settings as SettingsIcon, 
   LogOut,
-  Menu,
   Users,
   Building,
-  Building2,
   BookOpen,
   Bell,
   Search
@@ -17,12 +15,24 @@ import {
 import { Button } from "../components/ui/button";
 import CommandPalette from "../components/CommandPalette";
 import { useStore } from "../store/useStore";
+import { useAuth } from "../contexts/AuthContext";
 
 export default function AppLayout() {
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const { activeBranch, setActiveBranch } = useStore();
+  const { isAuthenticated, currentUser, logout } = useAuth();
+  const { activeBranch } = useStore();
   const [isCommandOpen, setIsCommandOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+
+  // Auth Guard: redirect to login if not authenticated
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+
+  const handleLogout = () => {
+    logout();
+    navigate("/login");
+  };
 
   const navItems = [
     { name: "Dashboard", path: "/", icon: LayoutDashboard },
@@ -33,7 +43,9 @@ export default function AppLayout() {
     { name: "Pengaturan", path: "/settings", icon: SettingsIcon },
   ];
 
-  const branches = ["Pusat", "Cabang Jakarta", "Cabang Bandung"];
+  const userInitials = currentUser?.name
+    ? currentUser.name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2)
+    : "??";
 
   return (
     <div className="min-h-screen bg-background">
@@ -70,7 +82,11 @@ export default function AppLayout() {
         </nav>
 
         <div className="p-4 border-t mt-auto">
-          <Button variant="ghost" className="w-full justify-start text-destructive hover:text-destructive hover:bg-destructive/10">
+          <Button 
+            variant="ghost" 
+            className="w-full justify-start text-destructive hover:text-destructive hover:bg-destructive/10"
+            onClick={handleLogout}
+          >
             <LogOut className="mr-3 h-5 w-5" />
             Keluar
           </Button>
@@ -82,9 +98,6 @@ export default function AppLayout() {
         {/* Header */}
         <header className="h-16 border-b bg-card/50 backdrop-blur-sm sticky top-0 z-40 flex items-center justify-between px-4 sm:px-6">
           <div className="flex items-center gap-4">
-
-
-
             {/* Global Search Button */}
             <Button 
               variant="outline" 
@@ -100,52 +113,19 @@ export default function AppLayout() {
           </div>
 
           <div className="flex items-center gap-3">
-
             {/* Notification Center */}
             <div className="relative group">
               <Button variant="ghost" size="icon" className="relative">
                 <Bell className="w-5 h-5 text-muted-foreground group-hover:text-foreground" />
-                <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-destructive rounded-full border border-background"></span>
               </Button>
-              <div className="absolute right-0 mt-2 w-80 bg-popover border shadow-lg rounded-xl overflow-hidden opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 origin-top-right">
-                <div className="p-3 border-b bg-secondary/30 flex justify-between items-center">
-                  <h4 className="font-semibold text-sm">Notifikasi</h4>
-                  <span className="text-xs text-primary cursor-pointer hover:underline">Tandai dibaca</span>
-                </div>
-                <div className="max-h-80 overflow-y-auto">
-                  <div className="p-3 border-b hover:bg-secondary/20 cursor-pointer flex gap-3">
-                    <div className="w-8 h-8 rounded-full bg-green-100 dark:bg-green-900/30 text-green-600 flex items-center justify-center shrink-0">
-                      <Receipt className="w-4 h-4" />
-                    </div>
-                    <div>
-                      <p className="text-sm text-foreground leading-tight font-medium">Transaksi Baru Ditambahkan</p>
-                      <p className="text-xs text-muted-foreground mt-1">Ahmad mencatat Dana Kampus Rp10.000.000</p>
-                      <p className="text-[10px] text-muted-foreground mt-1">Baru saja</p>
-                    </div>
-                  </div>
-                  <div className="p-3 border-b hover:bg-secondary/20 cursor-pointer flex gap-3">
-                    <div className="w-8 h-8 rounded-full bg-destructive/10 text-destructive flex items-center justify-center shrink-0">
-                      <PieChart className="w-4 h-4" />
-                    </div>
-                    <div>
-                      <p className="text-sm text-foreground leading-tight font-medium">Peringatan Anggaran</p>
-                      <p className="text-xs text-muted-foreground mt-1">Sisa anggaran bulan ini tinggal 30%</p>
-                      <p className="text-[10px] text-muted-foreground mt-1">2 jam yang lalu</p>
-                    </div>
-                  </div>
-                </div>
-                <div className="p-2 text-center bg-secondary/30 hover:bg-secondary/50 cursor-pointer transition-colors text-xs font-medium text-primary">
-                  Lihat Semua
-                </div>
-              </div>
             </div>
 
             <div className="text-right hidden sm:block border-l pl-3 ml-1">
-              <p className="text-sm font-medium leading-none text-foreground">Ahmad Admin</p>
-              <p className="text-xs text-muted-foreground mt-1">Admin Pusat</p>
+              <p className="text-sm font-medium leading-none text-foreground">{currentUser?.name || "User"}</p>
+              <p className="text-xs text-muted-foreground mt-1">{currentUser?.role || "—"} • {activeBranch}</p>
             </div>
             <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center border-2 border-primary/20 cursor-pointer hover:scale-105 transition-transform">
-              <span className="text-sm font-bold text-primary">AA</span>
+              <span className="text-sm font-bold text-primary">{userInitials}</span>
             </div>
           </div>
         </header>
@@ -161,6 +141,7 @@ export default function AppLayout() {
               { name: "Beranda", path: "/", icon: LayoutDashboard },
               { name: "Transaksi", path: "/transactions", icon: Receipt },
               { name: "Laporan", path: "/reports", icon: PieChart },
+              { name: "Pengguna", path: "/users", icon: Users },
               { name: "Settings", path: "/settings", icon: SettingsIcon }
             ].map((item) => {
               const isActive = location.pathname === item.path;

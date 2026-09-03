@@ -6,6 +6,7 @@ import { BookOpen, Search, Download, Printer } from "lucide-react";
 import { Input } from "../components/ui/input";
 import { cn } from "../utils/utils";
 import ContextMenu from "../components/ContextMenu";
+import EditTransactionModal from "../components/EditTransactionModal";
 import { useStore } from "../store/useStore";
 
 export default function Ledger() {
@@ -18,12 +19,15 @@ export default function Ledger() {
     selectedItem: null
   });
 
+  // Edit Modal State
+  const [editModal, setEditModal] = useState({ isOpen: false, transaction: null });
+
   const formatRupiah = (amount) => {
     return new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(amount);
   };
 
   const initialBalance = 0;
-  const { transactions, activeBranch, deleteTransaction } = useStore();
+  const { transactions, activeBranch, deleteTransaction, duplicateTransaction } = useStore();
 
   const getMonthFromDate = (dateStr) => {
     const d = new Date(dateStr);
@@ -73,6 +77,13 @@ export default function Ledger() {
   });
 
   const runningLedger = calculatedLedger.filter(e => e.desc.toLowerCase().includes(searchTerm.toLowerCase()));
+
+  const handleEdit = (entryId) => {
+    const tx = transactions.find(t => t.id === entryId);
+    if (tx) {
+      setEditModal({ isOpen: true, transaction: tx });
+    }
+  };
 
   const handleExportCSV = () => {
     const headers = ["Tanggal", "Referensi", "Uraian", "Debit", "Kredit", "Saldo"];
@@ -192,6 +203,9 @@ export default function Ledger() {
                         });
                       }
                     }}
+                    onDoubleClick={() => {
+                      if (!entry.isBalance) handleEdit(entry.id);
+                    }}
                   >
                     <td className="px-4 py-3 whitespace-nowrap text-muted-foreground">{entry.date}</td>
                   <td className="px-4 py-3 text-muted-foreground">{entry.ref}</td>
@@ -229,10 +243,16 @@ export default function Ledger() {
         isOpen={contextMenu.isOpen}
         onClose={() => setContextMenu(prev => ({ ...prev, isOpen: false }))}
         selectedItem={contextMenu.selectedItem}
-        onEdit={() => alert("Fitur edit akan segera hadir untuk " + contextMenu.selectedItem?.description)}
-        onDuplicate={() => alert("Fitur duplikat akan segera hadir.")}
+        onEdit={() => handleEdit(contextMenu.selectedItem?.id)}
+        onDuplicate={() => duplicateTransaction(contextMenu.selectedItem?.id)}
         onDelete={() => deleteTransaction(contextMenu.selectedItem?.id)}
         onPrint={() => window.print()}
+      />
+
+      <EditTransactionModal 
+        isOpen={editModal.isOpen}
+        onClose={() => setEditModal({ isOpen: false, transaction: null })}
+        transaction={editModal.transaction}
       />
     </div>
   );

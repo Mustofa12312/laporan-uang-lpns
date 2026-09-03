@@ -1,18 +1,19 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../components/ui/card";
 import { Button } from "../components/ui/button";
-import { Wallet, TrendingUp, FileText, PieChartIcon, ArrowRight, ArrowUpIcon, ArrowDownIcon, MoreHorizontal } from "lucide-react";
+import { Wallet, TrendingUp, FileText, PieChartIcon, ArrowUpIcon, ArrowDownIcon, MoreHorizontal } from "lucide-react";
 import { Skeleton } from "../components/ui/skeleton";
 import { motion } from "framer-motion";
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
 import { cn } from "../utils/utils";
 import { useStore } from "../store/useStore";
+import { exportToPDF } from "../services/export.service";
 
 export default function Dashboard() {
   const [isLoading, setIsLoading] = useState(true);
+  const [filterThisMonth, setFilterThisMonth] = useState(false);
 
   useEffect(() => {
-    // Simulate loading data
     const timer = setTimeout(() => setIsLoading(false), 800);
     return () => clearTimeout(timer);
   }, []);
@@ -28,26 +29,56 @@ export default function Dashboard() {
     return `${String(d.getDate()).padStart(2, '0')} ${months[d.getMonth()]} ${d.getFullYear()}`;
   };
 
-  const trendData = [
-    { name: 'Apr', Pemasukan: 15000000, Pengeluaran: 12000000 },
-    { name: 'Mei', Pemasukan: 18000000, Pengeluaran: 14500000 },
-    { name: 'Jun', Pemasukan: 20000000, Pengeluaran: 19000000 },
-    { name: 'Jul', Pemasukan: 22000000, Pengeluaran: 15000000 },
-    { name: 'Ags', Pemasukan: 17000000, Pengeluaran: 16500000 },
-    { name: 'Sep', Pemasukan: 20000000, Pengeluaran: 12500000 },
-  ];
-
-  const { transactions, activeBranch } = useStore();
+  const { transactions, activeBranch, budget } = useStore();
   
-  // Filter by branch
-  const branchTransactions = transactions.filter(t => t.branch === activeBranch);
+  // Filter by branch (and optionally this month)
+  const branchTransactions = useMemo(() => {
+    const now = new Date();
+    return transactions.filter(t => {
+      if (t.branch !== activeBranch) return false;
+      if (filterThisMonth) {
+        const d = new Date(t.date);
+        return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+      }
+      return true;
+    });
+  }, [transactions, activeBranch, filterThisMonth]);
   
   // Compute Totals
   const totalIncome = branchTransactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
   const totalExpense = branchTransactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
   const currentBalance = totalIncome - totalExpense;
-  const budget = 20000000;
-  const budgetPercentage = Math.min(100, Math.round((totalExpense / budget) * 100));
+  const budgetPercentage = budget > 0 ? Math.min(100, Math.round((totalExpense / budget) * 100)) : 0;
+
+  // Compute real trend data (last 6 months)
+  const trendData = useMemo(() => {
+    const months = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Ags", "Sep", "Okt", "Nov", "Des"];
+    const now = new Date();
+    const result = [];
+    
+    for (let i = 5; i >= 0; i--) {
+      const targetDate = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const month = targetDate.getMonth();
+      const year = targetDate.getFullYear();
+      
+      const monthTransactions = transactions.filter(t => {
+        if (t.branch !== activeBranch) return false;
+        const d = new Date(t.date);
+        return d.getMonth() === month && d.getFullYear() === year;
+      });
+      
+      const pemasukan = monthTransactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
+      const pengeluaran = monthTransactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
+      
+      result.push({
+        name: months[month],
+        Pemasukan: pemasukan,
+        Pengeluaran: pengeluaran
+      });
+    }
+    
+    return result;
+  }, [transactions, activeBranch]);
 
   // Compute Chart Data for Expenses
   const categoryTotals = {};
@@ -62,7 +93,9 @@ export default function Dashboard() {
     color: colors[index % colors.length]
   })).sort((a,b) => b.value - a.value);
 
-  const recentTransactions = branchTransactions.slice(0, 5);
+  const recentTransactions = branchTransactions
+    .sort((a, b) => new Date(b.date) - new Date(a.date))
+    .slice(0, 5);
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -76,7 +109,6 @@ export default function Dashboard() {
 
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
-      // BarChart Tooltip
       if (payload[0].dataKey) {
         return (
           <div className="bg-popover border border-border p-3 rounded-lg shadow-lg">
@@ -92,7 +124,6 @@ export default function Dashboard() {
         );
       }
       
-      // PieChart Tooltip
       return (
         <div className="bg-popover border border-border p-3 rounded-lg shadow-lg">
           <p className="font-semibold text-foreground">{payload[0].name}</p>
@@ -105,6 +136,15 @@ export default function Dashboard() {
     return null;
   };
 
+  const handleDownloadReport = () => {
+    const expenses = branchTransactions.filter(t => t.type === 'expense').map(t => ({
+      ...t,
+      date: formatDateForDisplay(t.date)
+    }));
+    const period = filterThisMonth ? `Bulan ${new Date().toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })}` : "Semua Periode";
+    exportToPDF(expenses, period, false);
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -113,8 +153,14 @@ export default function Dashboard() {
           <p className="text-muted-foreground mt-1">Ringkasan arus kas keuangan LPNS</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" className="hidden sm:flex shadow-sm">Bulan Ini</Button>
-          <Button className="shadow-lg shadow-primary/25">Unduh Laporan</Button>
+          <Button 
+            variant={filterThisMonth ? "default" : "outline"} 
+            className="hidden sm:flex shadow-sm"
+            onClick={() => setFilterThisMonth(!filterThisMonth)}
+          >
+            {filterThisMonth ? "Semua Data" : "Bulan Ini"}
+          </Button>
+          <Button className="shadow-lg shadow-primary/25" onClick={handleDownloadReport}>Unduh Laporan</Button>
         </div>
       </div>
 
@@ -151,7 +197,7 @@ export default function Dashboard() {
                 <>
                   <div className="text-2xl font-bold text-green-600 dark:text-green-500">{formatRupiah(totalIncome)}</div>
                   <p className="text-xs text-muted-foreground mt-1">
-                    <span className="text-green-500 font-medium inline-flex items-center"><ArrowUpIcon className="mr-1 h-3 w-3" /> Pemasukan Tercatat</span>
+                    <span className="text-green-500 font-medium inline-flex items-center"><ArrowUpIcon className="mr-1 h-3 w-3" /> {branchTransactions.filter(t => t.type === 'income').length} Transaksi</span>
                   </p>
                 </>
               )}
@@ -171,7 +217,7 @@ export default function Dashboard() {
                 <>
                   <div className="text-2xl font-bold text-destructive">{formatRupiah(totalExpense)}</div>
                   <p className="text-xs text-muted-foreground mt-1">
-                    <span className="text-destructive font-medium inline-flex items-center"><ArrowDownIcon className="mr-1 h-3 w-3" /> Transaksi Keluar</span>
+                    <span className="text-destructive font-medium inline-flex items-center"><ArrowDownIcon className="mr-1 h-3 w-3" /> {branchTransactions.filter(t => t.type === 'expense').length} Transaksi</span>
                   </p>
                 </>
               )}
@@ -203,7 +249,7 @@ export default function Dashboard() {
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
         
-        {/* Bar Chart (Trend) */}
+        {/* Bar Chart (Trend) — Real Data */}
         <Card className="col-span-1 lg:col-span-4 border-0 shadow-md h-[400px]">
           <CardHeader>
             <CardTitle>Tren Arus Kas (6 Bulan Terakhir)</CardTitle>
@@ -219,7 +265,7 @@ export default function Dashboard() {
                   <BarChart data={trendData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" opacity={0.5} />
                     <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} dy={10} />
-                    <YAxis axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} tickFormatter={(val) => `Rp${val/1000000}M`} />
+                    <YAxis axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} tickFormatter={(val) => val >= 1000000 ? `${val/1000000}M` : val >= 1000 ? `${val/1000}K` : val} />
                     <Tooltip content={<CustomTooltip />} cursor={{ fill: 'transparent' }} />
                     <Legend iconType="circle" wrapperStyle={{ paddingTop: '20px' }} />
                     <Bar dataKey="Pemasukan" fill="#22c55e" radius={[4, 4, 0, 0]} maxBarSize={40} />
@@ -242,7 +288,7 @@ export default function Dashboard() {
                   <div className="w-full h-full flex items-center justify-center">
                     <Skeleton className="h-20 w-20 rounded-full" />
                   </div>
-              ) : (
+              ) : chartData.length > 0 ? (
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                       <Pie data={chartData} cx="50%" cy="50%" innerRadius={35} outerRadius={50} paddingAngle={2} dataKey="value">
@@ -253,6 +299,8 @@ export default function Dashboard() {
                       <Tooltip content={<CustomTooltip />} />
                     </PieChart>
                   </ResponsiveContainer>
+              ) : (
+                <div className="flex items-center justify-center h-full text-sm text-muted-foreground">Belum ada data pengeluaran</div>
               )}
             </CardContent>
           </Card>
@@ -278,7 +326,7 @@ export default function Dashboard() {
                       <Skeleton className="h-3 w-16" />
                     </div>
                   ))
-                ) : (
+                ) : recentTransactions.length > 0 ? (
                   recentTransactions.map((transaction, index) => (
                     <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 + (index * 0.1) }} key={transaction.id} className="flex items-center justify-between group cursor-pointer">
                       <div className="flex items-center gap-3">
@@ -298,6 +346,8 @@ export default function Dashboard() {
                       </div>
                     </motion.div>
                   ))
+                ) : (
+                  <div className="text-sm text-muted-foreground text-center py-4">Belum ada transaksi</div>
                 )}
               </div>
             </CardContent>

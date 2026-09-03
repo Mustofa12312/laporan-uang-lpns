@@ -3,22 +3,35 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "../components/ui/card";
-import { Eye, EyeOff, Lock, Mail } from "lucide-react";
+import { Eye, EyeOff, Lock, Mail, AlertCircle } from "lucide-react";
 import { motion } from "framer-motion";
+import { useAuth } from "../contexts/AuthContext";
 
 export default function Login() {
   const navigate = useNavigate();
+  const { login } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
 
   const handleLogin = (e) => {
     e.preventDefault();
+    setError("");
     setIsLoading(true);
-    // Mock authentication
+
+    // Small delay for UX feel
     setTimeout(() => {
+      const result = login(email, password);
       setIsLoading(false);
-      navigate("/");
-    }, 1500);
+      
+      if (result.success) {
+        navigate("/");
+      } else {
+        setError(result.error);
+      }
+    }, 600);
   };
 
   return (
@@ -42,6 +55,16 @@ export default function Login() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleLogin} className="space-y-5">
+            {error && (
+              <motion.div 
+                initial={{ opacity: 0, y: -10 }} 
+                animate={{ opacity: 1, y: 0 }}
+                className="flex items-center gap-2 p-3 bg-destructive/10 text-destructive rounded-lg text-sm font-medium"
+              >
+                <AlertCircle className="w-4 h-4 shrink-0" />
+                {error}
+              </motion.div>
+            )}
             <div className="space-y-1.5">
               <label className="text-sm font-medium text-foreground">Email</label>
               <div className="relative">
@@ -51,6 +74,8 @@ export default function Login() {
                   placeholder="nama@lpns.org"
                   className="pl-10 h-11 bg-secondary/50 border-transparent focus:border-primary focus:bg-background transition-colors"
                   required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                 />
               </div>
             </div>
@@ -63,6 +88,8 @@ export default function Login() {
                   placeholder="••••••••"
                   className="pl-10 pr-10 h-11 bg-secondary/50 border-transparent focus:border-primary focus:bg-background transition-colors"
                   required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                 />
                 <button
                   type="button"
@@ -79,9 +106,6 @@ export default function Login() {
                 <input type="checkbox" className="rounded border-border text-primary focus:ring-primary h-4 w-4" />
                 <span>Ingat saya</span>
               </label>
-              <a href="#" className="text-sm font-medium text-primary hover:underline underline-offset-4">
-                Lupa password?
-              </a>
             </div>
 
             <Button
@@ -101,10 +125,14 @@ export default function Login() {
             </Button>
           </form>
         </CardContent>
-        <CardFooter className="justify-center pb-8 pt-2">
+        <CardFooter className="flex-col gap-2 pb-8 pt-2">
           <p className="text-sm text-muted-foreground">
             Hanya untuk pengurus internal LPNS
           </p>
+          <div className="text-xs text-muted-foreground/70 bg-secondary/50 rounded-lg p-3 w-full">
+            <p className="font-medium mb-1">Akun Demo:</p>
+            <p>admin@lpns.org / admin123</p>
+          </div>
         </CardFooter>
       </Card>
     </motion.div>
