@@ -10,6 +10,7 @@ import { useStore } from "../store/useStore";
 import { addCategory, updateCategory, deleteCategory } from "../services/category.service";
 import { closeBook } from "../services/report.service";
 import { addTransaction } from "../services/transaction.service";
+import { toast } from "react-hot-toast";
 
 export default function Settings() {
   const [activeTab, setActiveTab] = useState("profile");
@@ -25,11 +26,9 @@ export default function Settings() {
   // Income injection
   const [incomeTitle, setIncomeTitle] = useState("");
   const [incomeAmount, setIncomeAmount] = useState("");
-  const [incomeSuccess, setIncomeSuccess] = useState(false);
   
   // Close book
   const [periodName, setPeriodName] = useState("");
-  const [closeSuccess, setCloseSuccess] = useState(false);
 
   // Category management
   const [newCategoryName, setNewCategoryName] = useState("");
@@ -59,10 +58,10 @@ export default function Settings() {
       
       setIncomeTitle("");
       setIncomeAmount("");
-      setIncomeSuccess(true);
-      setTimeout(() => setIncomeSuccess(false), 2000);
+      toast.success("Pemasukan berhasil ditambahkan ke saldo!");
     } catch (error) {
       console.error("Gagal tambah saldo:", error);
+      toast.error("Gagal menambahkan saldo");
     }
   };
 
@@ -71,11 +70,10 @@ export default function Settings() {
     try {
       await closeBook(periodName, currentUser);
       setPeriodName("");
-      setCloseSuccess(true);
-      setTimeout(() => setCloseSuccess(false), 3000);
+      toast.success("Tutup Buku berhasil! Semua transaksi diarsipkan.");
     } catch (error) {
       console.error("Gagal tutup buku:", error);
-      alert(error.message);
+      toast.error(error.message || "Gagal tutup buku");
     }
   };
 
@@ -84,8 +82,10 @@ export default function Settings() {
     try {
       await addCategory({ name: newCategoryName.trim().toUpperCase(), status: "ACTIVE" });
       setNewCategoryName("");
+      toast.success("Kategori berhasil ditambahkan");
     } catch (error) {
       console.error("Gagal menambah kategori:", error);
+      toast.error("Gagal menambah kategori");
     }
   };
 
@@ -95,16 +95,20 @@ export default function Settings() {
       await updateCategory(id, { name: editingCategoryName.trim().toUpperCase() });
       setEditingCategoryId(null);
       setEditingCategoryName("");
+      toast.success("Kategori berhasil diperbarui");
     } catch (error) {
       console.error("Gagal update kategori:", error);
+      toast.error("Gagal update kategori");
     }
   };
 
   const handleToggleCategoryStatus = async (id, currentStatus) => {
     try {
       await updateCategory(id, { status: currentStatus === "ACTIVE" ? "INACTIVE" : "ACTIVE" });
+      toast.success(currentStatus === "ACTIVE" ? "Kategori dinonaktifkan" : "Kategori diaktifkan");
     } catch (error) {
       console.error("Gagal toggle kategori:", error);
+      toast.error("Gagal mengubah status kategori");
     }
   };
 
@@ -313,11 +317,6 @@ export default function Settings() {
                   <CardDescription>Tambahkan saldo awal atau pemasukan dana kampus/donasi ke sistem.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {incomeSuccess && (
-                    <div className="p-3 bg-green-100 text-green-700 rounded-md text-sm font-medium mb-4">
-                      Pemasukan berhasil ditambahkan ke saldo!
-                    </div>
-                  )}
                   <div className="space-y-2">
                     <label className="text-sm font-medium">Sumber Dana / Keterangan</label>
                     <Input placeholder="Misal: Pencairan Dana Kampus Tahap 2" value={incomeTitle} onChange={(e) => setIncomeTitle(e.target.value)} />
@@ -340,11 +339,6 @@ export default function Settings() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {closeSuccess && (
-                    <div className="p-3 bg-red-100 text-red-700 rounded-md text-sm font-medium mb-4">
-                      Tutup Buku berhasil! Semua transaksi telah diarsipkan dan saldo kembali menjadi 0.
-                    </div>
-                  )}
                   <div className="space-y-2">
                     <label className="text-sm font-medium">Nama Periode Arsip</label>
                     <Input placeholder="Misal: Laporan Triwulan 1 (Jan - Mar 2026)" value={periodName} onChange={(e) => setPeriodName(e.target.value)} />

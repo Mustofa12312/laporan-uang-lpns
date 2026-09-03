@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Eye, EyeOff, Lock, Mail, AlertCircle } from "lucide-react";
 import { motion } from "framer-motion";
 import { useAuth } from "../contexts/AuthContext";
+import { toast } from "react-hot-toast";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -15,23 +16,20 @@ export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
     setError("");
     setIsLoading(true);
 
-    // Small delay for UX feel
-    setTimeout(() => {
-      const result = login(email, password);
+    try {
+      await login(email, password);
       setIsLoading(false);
-      
-      if (result.success) {
-        navigate("/");
-      } else {
-        setError(result.error);
-      }
-    }, 600);
+      toast.success("Berhasil masuk ke sistem!");
+      navigate("/");
+    } catch (err) {
+      setIsLoading(false);
+      setError(err.message || "Email atau password salah");
+    }
   };
 
   return (

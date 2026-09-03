@@ -11,6 +11,7 @@ import { cn } from "../utils/utils";
 import { useStore } from "../store/useStore";
 import { useAuth } from "../contexts/AuthContext";
 import { addTransaction } from "../services/transaction.service";
+import { toast } from "react-hot-toast";
 
 export default function NewTransaction() {
   const navigate = useNavigate();
@@ -45,7 +46,10 @@ export default function NewTransaction() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!category || !name || !amount) return;
+    if (!category || !name || !amount) {
+      toast.error("Mohon lengkapi semua data wajib");
+      return;
+    }
 
     setIsLoading(true);
     
@@ -66,11 +70,12 @@ export default function NewTransaction() {
       setTimeout(() => {
         setIsLoading(false);
         setShowSuccess(true);
+        toast.success("Transaksi berhasil dicatat");
       }, 600);
     } catch (error) {
       console.error("Gagal menyimpan transaksi:", error);
       setIsLoading(false);
-      // In a real app we would show a toast here
+      toast.error(error.message || "Gagal menyimpan transaksi");
     }
   };
 

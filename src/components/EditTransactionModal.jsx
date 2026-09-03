@@ -10,6 +10,7 @@ import { cn } from "../utils/utils";
 import { useStore } from "../store/useStore";
 import { useAuth } from "../contexts/AuthContext";
 import { updateTransaction } from "../services/transaction.service";
+import { toast } from "react-hot-toast";
 
 export default function EditTransactionModal({ isOpen, onClose, transaction }) {
   const { categories } = useStore();
@@ -46,7 +47,10 @@ export default function EditTransactionModal({ isOpen, onClose, transaction }) {
 
   const handleSave = async (e) => {
     e.preventDefault();
-    if (!category || !name || !amount) return;
+    if (!category || !name || !amount) {
+      toast.error("Mohon lengkapi semua data wajib");
+      return;
+    }
 
     setIsLoading(true);
     
@@ -66,10 +70,12 @@ export default function EditTransactionModal({ isOpen, onClose, transaction }) {
       setTimeout(() => {
         setIsLoading(false);
         onClose();
+        toast.success("Transaksi berhasil diperbarui");
       }, 300);
     } catch (error) {
       console.error("Gagal mengupdate transaksi:", error);
       setIsLoading(false);
+      toast.error(error.message || "Gagal mengupdate transaksi");
     }
   };
 

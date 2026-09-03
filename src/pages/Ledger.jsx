@@ -8,8 +8,12 @@ import { cn } from "../utils/utils";
 import ContextMenu from "../components/ContextMenu";
 import EditTransactionModal from "../components/EditTransactionModal";
 import { useStore } from "../store/useStore";
+import { useAuth } from "../contexts/AuthContext";
+import { addTransaction, deleteTransaction } from "../services/transaction.service";
+import { toast } from "react-hot-toast";
 
 export default function Ledger() {
+  const { currentUser } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
   const [filterMonth, setFilterMonth] = useState("all");
   
@@ -41,6 +45,25 @@ export default function Ledger() {
     if (isNaN(d.getTime())) return dateStr;
     return `${String(d.getDate()).padStart(2, '0')} ${months[d.getMonth()]} ${d.getFullYear()}`;
   };
+
+  // Calculate initial balance based on prior transactions
+  let initialBalance = 0;
+  
+  if (filterMonth !== "all") {
+    const filterMonthIndex = parseInt(filterMonth) - 1;
+    const priorTransactions = transactions.filter(t => {
+      if (t.branch !== activeBranch) return false;
+      const d = new Date(t.date);
+      if (isNaN(d.getTime())) return false;
+      // Simplified: Just checks if month is before the filter month in the current year
+      // Real app might need a robust date range check combining year and month
+      return d.getMonth() < filterMonthIndex;
+    });
+    
+    const priorIncome = priorTransactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
+    const priorExpense = priorTransactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
+    initialBalance = priorIncome - priorExpense;
+  }
 
   // Filter transactions by branch and month
   const branchTransactions = transactions.filter(t => {
@@ -82,6 +105,36 @@ export default function Ledger() {
     const tx = transactions.find(t => t.id === entryId);
     if (tx) {
       setEditModal({ isOpen: true, transaction: tx });
+    }
+  };
+
+  const handleDuplicate = async (transactionId) => {
+    const original = transactions.find(t => t.id === transactionId);
+    if (!original) return;
+    
+    // eslint-disable-next-line no-unused-vars
+    const { id, createdAt, createdBy, createdByName, updatedAt, updatedBy, updatedByName, ...duplicateData } = original;
+    
+    duplicateData.name = `${original.name} (Salinan)`;
+    duplicateData.date = new Date().toISOString().split('T')[0];
+    
+    try {
+      await addTransaction(duplicateData, currentUser);
+      toast.success("Transaksi diduplikasi");
+    } catch (error) {
+      console.error("Gagal menduplikasi:", error);
+      toast.error("Gagal menduplikasi transaksi");
+    }
+  };
+
+  const handleDelete = async (transactionId) => {
+    if (!window.confirm("Yakin ingin menghapus transaksi ini?")) return;
+    try {
+      await deleteTransaction(transactionId, currentUser);
+      toast.success("Transaksi dihapus");
+    } catch (error) {
+      console.error("Gagal menghapus:", error);
+      toast.error("Gagal menghapus transaksi");
     }
   };
 
@@ -244,8 +297,8 @@ export default function Ledger() {
         onClose={() => setContextMenu(prev => ({ ...prev, isOpen: false }))}
         selectedItem={contextMenu.selectedItem}
         onEdit={() => handleEdit(contextMenu.selectedItem?.id)}
-        onDuplicate={() => duplicateTransaction(contextMenu.selectedItem?.id)}
-        onDelete={() => deleteTransaction(contextMenu.selectedItem?.id)}
+        onDuplicate={() => handleDuplicate(contextMenu.selectedItem?.id)}
+        onDelete={() => handleDelete(contextMenu.selectedItem?.id)}
         onPrint={() => window.print()}
       />
 

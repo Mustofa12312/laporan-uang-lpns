@@ -17,6 +17,7 @@ import CommandPalette from "../components/CommandPalette";
 import { useStore } from "../store/useStore";
 import { useAuth } from "../contexts/AuthContext";
 import { useFirebaseSync } from "../hooks/useFirebaseSync";
+import { Toaster } from "react-hot-toast";
 
 export default function AppLayout() {
   const { isAuthenticated, currentUser, logout } = useAuth();
@@ -167,6 +168,7 @@ export default function AppLayout() {
       </div>
       
       <CommandPalette isOpen={isCommandOpen} setIsOpen={setIsCommandOpen} />
+      <Toaster position="bottom-right" />
     </div>
   );
 }
