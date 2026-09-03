@@ -6,42 +6,74 @@ import { FileDown, Printer, FileText, Download, Lock, LockOpen, CheckCircle, Shi
 import { motion } from "framer-motion";
 import { exportToExcel, exportToPDF } from "../services/export.service";
 import { cn } from "../utils/utils";
+import { useStore } from "../store/useStore";
 
 export default function Reports() {
   const [isLocked, setIsLocked] = useState(false);
   const [isApproved, setIsApproved] = useState(false);
+  const [filterMonth, setFilterMonth] = useState("all");
+  const [filterYear, setFilterYear] = useState(new Date().getFullYear().toString());
+
+  const { transactions, activeBranch } = useStore();
 
   const formatRupiah = (amount) => {
     return new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(amount);
   };
 
-  const categoryRecap = [
-    { name: "HONORIUM", amount: 4000000, transactions: 8 },
-    { name: "PERLENGKAPAN", amount: 2100000, transactions: 5 },
-    { name: "ATK", amount: 1500000, transactions: 12 },
-    { name: "TRANSPORTASI", amount: 1250000, transactions: 15 },
-    { name: "KONSUMSI", amount: 900000, transactions: 7 },
-  ];
+  const getMonthFromDate = (dateStr) => {
+    const d = new Date(dateStr);
+    if(isNaN(d.getTime())) return "all";
+    return String(d.getMonth() + 1).padStart(2, '0');
+  };
+  
+  const getYearFromDate = (dateStr) => {
+    const d = new Date(dateStr);
+    if(isNaN(d.getTime())) return new Date().getFullYear().toString();
+    return d.getFullYear().toString();
+  };
 
-  // Dummy detailed transactions for export demonstration
-  const dummyTransactions = [
-    { id: "TX-001", date: "03 Sep 2026", name: "Beli Kertas A4", category: "ATK", amount: 150000, description: "Untuk printer sekretariat" },
-    { id: "TX-002", date: "04 Sep 2026", name: "Honor Rapat", category: "HONORIUM", amount: 500000, description: "Honor peserta" },
-    { id: "TX-003", date: "05 Sep 2026", name: "Snack Rapat", category: "KONSUMSI", amount: 250000, description: "" },
-    { id: "TX-004", date: "06 Sep 2026", name: "Bensin Survei", category: "TRANSPORTASI", amount: 100000, description: "Survei lapangan" },
-    { id: "TX-005", date: "08 Sep 2026", name: "Sewa Proyektor", category: "PERLENGKAPAN", amount: 300000, description: "Acara sosialisasi" },
-    { id: "TX-006", date: "10 Sep 2026", name: "Tinta Printer", category: "ATK", amount: 85000, description: "" },
-  ];
+  const formatDateForDisplay = (dateStr) => {
+    const d = new Date(dateStr);
+    const months = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Ags", "Sep", "Okt", "Nov", "Des"];
+    if (isNaN(d.getTime())) return dateStr;
+    return `${String(d.getDate()).padStart(2, '0')} ${months[d.getMonth()]} ${d.getFullYear()}`;
+  };
 
+  const branchExpenses = transactions.filter(t => {
+    const isExpense = t.type === 'expense';
+    const isBranch = t.branch === activeBranch;
+    const isMonth = filterMonth === "all" || getMonthFromDate(t.date) === filterMonth;
+    const isYear = filterYear === "all" || getYearFromDate(t.date) === filterYear;
+    return isExpense && isBranch && isMonth && isYear;
+  });
+
+  const categoryMap = {};
+  branchExpenses.forEach(t => {
+    if(!categoryMap[t.category]) {
+      categoryMap[t.category] = { name: t.category, amount: 0, transactions: 0 };
+    }
+    categoryMap[t.category].amount += t.amount;
+    categoryMap[t.category].transactions += 1;
+  });
+  
+  const categoryRecap = Object.values(categoryMap).sort((a,b) => b.amount - a.amount);
+  
   const total = categoryRecap.reduce((acc, curr) => acc + curr.amount, 0);
   const totalTx = categoryRecap.reduce((acc, curr) => acc + curr.transactions, 0);
 
+  const mappedTransactions = branchExpenses.map(t => ({
+    ...t,
+    date: formatDateForDisplay(t.date)
+  }));
+
+  const periodName = `${filterMonth === "all" ? "Semua Bulan" : filterMonth} ${filterYear}`;
+
   const handleExportExcel = () => {
-    exportToExcel(dummyTransactions, "September 2026");
+    exportToExcel(mappedTransactions, periodName);
   };
 
   const handleExportPDF = () => {
-    exportToPDF(dummyTransactions, "September 2026", isApproved);
+    exportToPDF(mappedTransactions, periodName, isApproved);
   };
 
   const handleToggleLock = () => {
@@ -89,15 +121,26 @@ export default function Reports() {
           <div className="flex-1 flex gap-4 w-full">
             <div className="flex-1">
               <label className="text-xs font-medium text-muted-foreground mb-1 block">Bulan</label>
-              <Select defaultValue="09">
-                <option value="09">September</option>
-                <option value="08">Agustus</option>
+              <Select value={filterMonth} onChange={(e) => setFilterMonth(e.target.value)}>
+                <option value="all">Semua Bulan</option>
+                <option value="01">Januari</option>
+                <option value="02">Februari</option>
+                <option value="03">Maret</option>
+                <option value="04">April</option>
+                <option value="05">Mei</option>
+                <option value="06">Juni</option>
                 <option value="07">Juli</option>
+                <option value="08">Agustus</option>
+                <option value="09">September</option>
+                <option value="10">Oktober</option>
+                <option value="11">November</option>
+                <option value="12">Desember</option>
               </Select>
             </div>
             <div className="flex-1">
               <label className="text-xs font-medium text-muted-foreground mb-1 block">Tahun</label>
-              <Select defaultValue="2026">
+              <Select value={filterYear} onChange={(e) => setFilterYear(e.target.value)}>
+                <option value="all">Semua Tahun</option>
                 <option value="2026">2026</option>
                 <option value="2025">2025</option>
               </Select>
@@ -113,7 +156,7 @@ export default function Reports() {
           <div className="bg-primary/5 p-6 border-b flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
               <h2 className="text-xl font-bold text-foreground">Laporan Pengeluaran</h2>
-              <p className="text-sm text-muted-foreground">Periode: September 2026</p>
+              <p className="text-sm text-muted-foreground">Periode: {periodName}</p>
             </div>
             <div className="flex gap-2 w-full sm:w-auto overflow-x-auto pb-2 sm:pb-0">
               <Button variant="outline" size="sm" className="shrink-0 bg-background" onClick={handleExportExcel}>

@@ -13,11 +13,19 @@ export const exportToExcel = (transactions, periodName) => {
     ["LAPORAN PENGELUARAN KEUANGAN LPNS"],
     ["Periode:", periodName],
     [""],
-    ["ID", "Tanggal", "Nama Pengeluaran", "Kategori", "Nominal", "Keterangan"]
+    ["Tanggal", "Kategori", "Keterangan", "Volume", "Satuan", "Harga Satuan", "Jumlah"]
   ];
 
   transactions.forEach((t) => {
-    summaryData.push([t.id, t.date, t.name, t.category, t.amount, t.description || ""]);
+    summaryData.push([
+      t.date, 
+      t.category, 
+      t.name, 
+      t.volume || "-", 
+      t.unit || "-", 
+      t.unitPrice || "-", 
+      t.amount
+    ]);
   });
 
   const wsSummary = XLSX.utils.aoa_to_sheet(summaryData);
@@ -32,16 +40,23 @@ export const exportToExcel = (transactions, periodName) => {
       [`PENGELUARAN KATEGORI: ${category}`],
       ["Periode:", periodName],
       [""],
-      ["ID", "Tanggal", "Nama Pengeluaran", "Nominal", "Keterangan"]
+      ["Tanggal", "Keterangan", "Volume", "Satuan", "Harga Satuan", "Jumlah"]
     ];
 
     let total = 0;
     catTransactions.forEach((t) => {
-      catData.push([t.id, t.date, t.name, t.amount, t.description || ""]);
+      catData.push([
+        t.date, 
+        t.name, 
+        t.volume || "-", 
+        t.unit || "-", 
+        t.unitPrice || "-", 
+        t.amount
+      ]);
       total += t.amount;
     });
 
-    catData.push(["", "", "TOTAL", total, ""]);
+    catData.push(["", "TOTAL", "", "", "", total]);
 
     const ws = XLSX.utils.aoa_to_sheet(catData);
     

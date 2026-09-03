@@ -160,7 +160,7 @@ export default function AppLayout() {
             {[
               { name: "Beranda", path: "/", icon: LayoutDashboard },
               { name: "Transaksi", path: "/transactions", icon: Receipt },
-              { name: "Buku Besar", path: "/ledger", icon: BookOpen },
+              { name: "Laporan", path: "/reports", icon: PieChart },
               { name: "Settings", path: "/settings", icon: SettingsIcon }
             ].map((item) => {
               const isActive = location.pathname === item.path;
