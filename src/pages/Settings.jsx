@@ -10,12 +10,46 @@ import { useStore } from "../store/useStore";
 import { addCategory, updateCategory, deleteCategory } from "../services/category.service";
 import { closeBook } from "../services/report.service";
 import { addTransaction } from "../services/transaction.service";
+import { changePassword } from "../services/auth.service";
 import { toast } from "react-hot-toast";
 
 export default function Settings() {
   const [activeTab, setActiveTab] = useState("profile");
   const { theme, setTheme } = useTheme();
   const { currentUser } = useAuth();
+  
+  // Password State
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+
+  const handleChangePassword = async () => {
+    if (newPassword.length < 6) {
+      toast.error("Password minimal 6 karakter");
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      toast.error("Konfirmasi password tidak cocok");
+      return;
+    }
+
+    setIsChangingPassword(true);
+    try {
+      await changePassword(newPassword);
+      toast.success("Password berhasil diperbarui!");
+      setNewPassword("");
+      setConfirmPassword("");
+    } catch (error) {
+      console.error("Gagal mengganti password:", error);
+      if (error.code === 'auth/requires-recent-login') {
+        toast.error("Sesi telah berakhir. Silakan logout dan login kembali untuk mengganti password.");
+      } else {
+        toast.error(error.message || "Gagal memperbarui password");
+      }
+    } finally {
+      setIsChangingPassword(false);
+    }
+  };
   
   const { 
     archives, 
@@ -190,11 +224,37 @@ export default function Settings() {
                 </CardContent>
               </Card>
 
-              <Card className="border-0 shadow-sm bg-secondary/20">
-                <CardContent className="p-4">
-                  <p className="text-sm text-muted-foreground">
-                    ℹ️ Ganti password membutuhkan integrasi Firebase Auth. Fitur ini akan tersedia setelah backend Firebase dikonfigurasi.
-                  </p>
+              <Card className="border-0 shadow-sm">
+                <CardHeader>
+                  <CardTitle>Keamanan</CardTitle>
+                  <CardDescription>Ubah kata sandi akun Anda.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Password Baru</label>
+                    <Input 
+                      type="password" 
+                      placeholder="Minimal 6 karakter" 
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Konfirmasi Password Baru</label>
+                    <Input 
+                      type="password" 
+                      placeholder="Ulangi password baru"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                    />
+                  </div>
+                  <Button 
+                    className="w-full sm:w-auto"
+                    onClick={handleChangePassword}
+                    disabled={isChangingPassword || !newPassword || !confirmPassword}
+                  >
+                    {isChangingPassword ? "Menyimpan..." : "Perbarui Password"}
+                  </Button>
                 </CardContent>
               </Card>
             </motion.div>

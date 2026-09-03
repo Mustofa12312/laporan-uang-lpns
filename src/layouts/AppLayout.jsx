@@ -34,8 +34,9 @@ export default function AppLayout() {
     return <Navigate to="/login" replace />;
   }
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    toast.success("Berhasil keluar dari sistem");
+    await logout();
     navigate("/login");
   };
 

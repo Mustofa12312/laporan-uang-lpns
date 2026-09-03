@@ -7,6 +7,7 @@ import { Search, UserPlus, Shield, User, Power, Edit, X, Save } from "lucide-rea
 import { motion, AnimatePresence } from "framer-motion";
 import { useStore } from "../store/useStore";
 import { createUserDocument, updateUser, deleteUser } from "../services/user.service";
+import { toast } from "react-hot-toast";
 
 export default function Users() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -16,6 +17,7 @@ export default function Users() {
   const [showModal, setShowModal] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
   const [formData, setFormData] = useState({ name: "", email: "", password: "", role: "BENDAHARA" });
+  const [isLoading, setIsLoading] = useState(false);
 
   const filtered = users.filter(u => 
     u.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -46,14 +48,24 @@ export default function Users() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.name || !formData.email) return;
+    if (!formData.name || !formData.email) {
+      toast.error("Mohon lengkapi nama dan email");
+      return;
+    }
+
+    setIsLoading(true);
 
     try {
       if (editingUser) {
         const updates = { name: formData.name, email: formData.email, role: formData.role };
         await updateUser(editingUser.id, updates);
+        toast.success("User berhasil diperbarui");
       } else {
-        if (!formData.password) return;
+        if (!formData.password) {
+          setIsLoading(false);
+          toast.error("Password wajib diisi untuk user baru");
+          return;
+        }
         // In a real app, this should call a Cloud Function to create the Auth user securely
         // For now, we simulate by creating the document directly
         await createUserDocument(`USR-${Date.now()}`, { 
@@ -63,18 +75,30 @@ export default function Users() {
           status: "ACTIVE", 
           lastLogin: "Belum pernah login" 
         });
+        toast.success("User berhasil ditambahkan");
       }
       setShowModal(false);
     } catch (error) {
       console.error("Gagal menyimpan user:", error);
+      toast.error("Terjadi kesalahan saat menyimpan user");
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleToggleStatus = async (user) => {
+    if (user.role === "ADMIN") {
+      toast.error("Tidak dapat menonaktifkan akun Admin utama");
+      return;
+    }
+    
     try {
-      await updateUser(user.id, { status: user.status === "ACTIVE" ? "INACTIVE" : "ACTIVE" });
+      const newStatus = user.status === "ACTIVE" ? "INACTIVE" : "ACTIVE";
+      await updateUser(user.id, { status: newStatus });
+      toast.success(`User berhasil di${newStatus === "ACTIVE" ? "aktifkan" : "nonaktifkan"}`);
     } catch (error) {
       console.error("Gagal toggle status:", error);
+      toast.error("Gagal mengubah status user");
     }
   };
 
@@ -202,9 +226,9 @@ export default function Users() {
                 </div>
                 <div className="flex gap-3 pt-2">
                   <Button type="button" variant="outline" className="flex-1" onClick={() => setShowModal(false)}>Batal</Button>
-                  <Button type="submit" className="flex-1">
+                  <Button type="submit" className="flex-1" disabled={isLoading}>
                     <Save className="w-4 h-4 mr-2" />
-                    {editingUser ? "Simpan Perubahan" : "Tambah User"}
+                    {isLoading ? "Memproses..." : (editingUser ? "Simpan Perubahan" : "Tambah User")}
                   </Button>
                 </div>
               </form>

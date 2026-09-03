@@ -27,3 +27,9 @@ export const logoutUser = async () => {
   }
 };
 
+export const changePassword = async (newPassword) => {
+  const { updatePassword } = await import("firebase/auth");
+  if (!auth.currentUser) throw new Error("Tidak ada user aktif");
+  await updatePassword(auth.currentUser, newPassword);
+};
+
