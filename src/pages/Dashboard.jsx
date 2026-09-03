@@ -21,6 +21,13 @@ export default function Dashboard() {
     return new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(amount);
   };
 
+  const formatDateForDisplay = (dateStr) => {
+    const d = new Date(dateStr);
+    const months = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Ags", "Sep", "Okt", "Nov", "Des"];
+    if (isNaN(d.getTime())) return dateStr;
+    return `${String(d.getDate()).padStart(2, '0')} ${months[d.getMonth()]} ${d.getFullYear()}`;
+  };
+
   const trendData = [
     { name: 'Apr', Pemasukan: 15000000, Pengeluaran: 12000000 },
     { name: 'Mei', Pemasukan: 18000000, Pengeluaran: 14500000 },
@@ -282,7 +289,7 @@ export default function Dashboard() {
                           <p className="text-xs font-semibold leading-none group-hover:text-primary transition-colors">{transaction.name}</p>
                           <div className="flex items-center text-[10px] text-muted-foreground mt-1 gap-1.5">
                             <span className="bg-secondary px-1 py-0.5 rounded font-medium">{transaction.category}</span>
-                            <span>{transaction.date}</span>
+                            <span>{formatDateForDisplay(transaction.date)}</span>
                           </div>
                         </div>
                       </div>

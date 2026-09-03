@@ -38,16 +38,11 @@ export default function NewTransaction() {
 
     setIsLoading(true);
     
-    // Convert date "YYYY-MM-DD" to "DD MMM YYYY" format for consistency
-    const dateObj = new Date(date);
-    const months = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Ags", "Sep", "Okt", "Nov", "Des"];
-    const formattedDate = `${String(dateObj.getDate()).padStart(2, '0')} ${months[dateObj.getMonth()]} ${dateObj.getFullYear()}`;
-
     // Add to Global Store
     addTransaction({
       name,
       category,
-      date: formattedDate,
+      date,
       amount: parseInt(amount),
       type: txType,
       branch: activeBranch,

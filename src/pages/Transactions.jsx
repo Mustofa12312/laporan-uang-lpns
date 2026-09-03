@@ -22,13 +22,58 @@ export default function Transactions() {
 
   const { transactions, activeBranch, deleteTransaction } = useStore();
 
-  const filtered = transactions.filter(t => 
-    t.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
-    t.branch === activeBranch
-  );
+  const [filterMonth, setFilterMonth] = useState("all");
+
+  const getMonthFromDate = (dateStr) => {
+    const d = new Date(dateStr);
+    if(isNaN(d.getTime())) return "all";
+    return String(d.getMonth() + 1).padStart(2, '0');
+  };
+
+  const formatDateForDisplay = (dateStr) => {
+    const d = new Date(dateStr);
+    const months = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Ags", "Sep", "Okt", "Nov", "Des"];
+    if (isNaN(d.getTime())) return dateStr;
+    return `${String(d.getDate()).padStart(2, '0')} ${months[d.getMonth()]} ${d.getFullYear()}`;
+  };
+
+  const filtered = transactions.filter(t => {
+    const matchesSearch = t.name.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesBranch = t.branch === activeBranch;
+    const matchesMonth = filterMonth === "all" || getMonthFromDate(t.date) === filterMonth;
+    return matchesSearch && matchesBranch && matchesMonth;
+  });
 
   const formatRupiah = (amount) => {
     return new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(amount);
+  };
+
+  const handleExportCSV = () => {
+    const headers = ["ID Transaksi", "Tanggal", "Tipe", "Kategori", "Uraian", "Nominal", "Cabang"];
+    const csvContent = [
+      headers.join(","),
+      ...filtered.map(t => [
+        `"${t.id}"`,
+        `"${formatDateForDisplay(t.date)}"`,
+        `"${t.type === 'income' ? 'Pemasukan' : 'Pengeluaran'}"`,
+        `"${t.category}"`,
+        `"${t.volume ? `${t.name} (${t.volume} ${t.unit} x ${formatRupiah(t.unitPrice)})` : t.name}"`,
+        t.amount,
+        `"${t.branch}"`
+      ].join(","))
+    ].join("\n");
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement("a");
+    if (link.download !== undefined) {
+      const url = URL.createObjectURL(blob);
+      link.setAttribute("href", url);
+      link.setAttribute("download", `Transaksi_LPNS_${new Date().getTime()}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
   };
 
   return (
@@ -39,7 +84,7 @@ export default function Transactions() {
           <p className="text-muted-foreground mt-1">Kelola pencatatan arus kas (Pemasukan & Pengeluaran)</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" className="hidden sm:flex shadow-sm">
+          <Button variant="outline" className="hidden sm:flex shadow-sm" onClick={handleExportCSV}>
             <FileDown className="mr-2 h-4 w-4" /> Export
           </Button>
           <Button asChild className="shadow-lg shadow-primary/20 hover:scale-105 transition-transform">
@@ -62,7 +107,7 @@ export default function Transactions() {
           />
         </div>
         <div className="flex gap-2">
-          <Select className="w-[140px] shadow-sm hidden sm:flex">
+          <Select className="w-[140px] shadow-sm hidden sm:flex" value={filterMonth} onChange={(e) => setFilterMonth(e.target.value)}>
             <option value="all">Semua Bulan</option>
             <option value="01">Januari 2026</option>
             <option value="02">Februari 2026</option>
@@ -165,9 +210,14 @@ export default function Transactions() {
                     </div>
                     <div>
                       <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors line-clamp-1">{transaction.name}</h3>
-                      <div className="flex items-center text-xs text-muted-foreground mt-1.5 gap-2">
+                      <div className="flex flex-wrap items-center text-xs text-muted-foreground mt-1.5 gap-2">
                         <span className="bg-secondary px-2 py-0.5 rounded-full font-medium">{transaction.category}</span>
-                        <span>{transaction.date}</span>
+                        <span>{formatDateForDisplay(transaction.date)}</span>
+                        {transaction.volume && transaction.unitPrice && (
+                          <span className="text-primary/70 font-medium">
+                            &bull; {transaction.volume} {transaction.unit} x {formatRupiah(transaction.unitPrice)}
+                          </span>
+                        )}
                       </div>
                     </div>
                   </div>

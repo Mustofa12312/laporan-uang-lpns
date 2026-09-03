@@ -35,7 +35,7 @@ export default function Settings() {
     addTransaction({
       name: incomeTitle,
       category: "DANA KAMPUS",
-      date: new Date().toLocaleDateString('id-ID', {day: '2-digit', month: 'short', year: 'numeric'}),
+      date: new Date().toISOString().split('T')[0],
       amount: parseInt(incomeAmount),
       type: "income",
       branch: "Pusat",

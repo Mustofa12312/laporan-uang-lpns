@@ -82,14 +82,7 @@ export default function AppLayout() {
         {/* Header */}
         <header className="h-16 border-b bg-card/50 backdrop-blur-sm sticky top-0 z-40 flex items-center justify-between px-4 sm:px-6">
           <div className="flex items-center gap-4">
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="md:hidden" 
-              onClick={() => setIsMobileMenuOpen(true)}
-            >
-              <Menu className="h-5 w-5" />
-            </Button>
+
 
 
             {/* Global Search Button */}
@@ -107,18 +100,6 @@ export default function AppLayout() {
           </div>
 
           <div className="flex items-center gap-3">
-            <div className="flex sm:hidden items-center gap-2 border rounded-full px-2 py-1 bg-background mr-2">
-              <Building2 className="w-3 h-3 text-primary" />
-              <select 
-                className="bg-transparent text-xs font-medium outline-none"
-                value={activeBranch}
-                onChange={(e) => setActiveBranch(e.target.value)}
-              >
-                {branches.map(b => (
-                  <option key={b} value={b}>{b}</option>
-                ))}
-              </select>
-            </div>
 
             {/* Notification Center */}
             <div className="relative group">
@@ -169,9 +150,35 @@ export default function AppLayout() {
           </div>
         </header>
 
-        <main className="flex-1 p-4 sm:p-8">
+        <main className="flex-1 p-4 pb-24 md:p-8">
           <Outlet />
         </main>
+        
+        {/* Bottom Navigation - Mobile */}
+        <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-background/80 backdrop-blur-md border-t border-border z-50 px-2 pb-safe">
+          <div className="flex items-center justify-around h-16">
+            {[
+              { name: "Beranda", path: "/", icon: LayoutDashboard },
+              { name: "Transaksi", path: "/transactions", icon: Receipt },
+              { name: "Buku Besar", path: "/ledger", icon: BookOpen },
+              { name: "Settings", path: "/settings", icon: SettingsIcon }
+            ].map((item) => {
+              const isActive = location.pathname === item.path;
+              return (
+                <Link
+                  key={item.name}
+                  to={item.path}
+                  className={`flex flex-col items-center justify-center w-full h-full space-y-1 transition-colors ${
+                    isActive ? "text-primary" : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  <item.icon className={`h-5 w-5 ${isActive ? "fill-primary/20" : ""}`} />
+                  <span className="text-[10px] font-medium">{item.name}</span>
+                </Link>
+              );
+            })}
+          </div>
+        </nav>
       </div>
       
       <CommandPalette isOpen={isCommandOpen} setIsOpen={setIsCommandOpen} />

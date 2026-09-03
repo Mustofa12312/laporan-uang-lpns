@@ -10,6 +10,7 @@ import { useStore } from "../store/useStore";
 
 export default function Ledger() {
   const [searchTerm, setSearchTerm] = useState("");
+  const [filterMonth, setFilterMonth] = useState("all");
   
   const [contextMenu, setContextMenu] = useState({
     isOpen: false,
@@ -24,8 +25,25 @@ export default function Ledger() {
   const initialBalance = 0;
   const { transactions, activeBranch, deleteTransaction } = useStore();
 
-  // Filter transactions by branch
-  const branchTransactions = transactions.filter(t => t.branch === activeBranch);
+  const getMonthFromDate = (dateStr) => {
+    const d = new Date(dateStr);
+    if(isNaN(d.getTime())) return "all";
+    return String(d.getMonth() + 1).padStart(2, '0');
+  };
+
+  const formatDateForDisplay = (dateStr) => {
+    const d = new Date(dateStr);
+    const months = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Ags", "Sep", "Okt", "Nov", "Des"];
+    if (isNaN(d.getTime())) return dateStr;
+    return `${String(d.getDate()).padStart(2, '0')} ${months[d.getMonth()]} ${d.getFullYear()}`;
+  };
+
+  // Filter transactions by branch and month
+  const branchTransactions = transactions.filter(t => {
+    const matchesBranch = t.branch === activeBranch;
+    const matchesMonth = filterMonth === "all" || getMonthFromDate(t.date) === filterMonth;
+    return matchesBranch && matchesMonth;
+  });
   
   // Sort from oldest to newest for ledger calculation
   const sortedTransactions = [...branchTransactions].sort((a, b) => new Date(a.date) - new Date(b.date));
@@ -35,8 +53,8 @@ export default function Ledger() {
     { id: "LG-001", date: "-", desc: "Saldo Awal", ref: "-", debit: 0, credit: 0, isBalance: true },
     ...sortedTransactions.map(t => ({
       id: t.id,
-      date: t.date,
-      desc: t.name,
+      date: formatDateForDisplay(t.date),
+      desc: t.volume ? `${t.name} (${t.volume} ${t.unit} x ${formatRupiah(t.unitPrice)})` : t.name,
       ref: t.type === 'income' ? 'INC' : 'EXP',
       debit: t.type === 'income' ? t.amount : 0,
       credit: t.type === 'expense' ? t.amount : 0,
@@ -107,7 +125,8 @@ export default function Ledger() {
           <div className="flex gap-4 w-full sm:w-auto">
             <div className="space-y-1">
               <label className="text-xs font-medium text-muted-foreground">Bulan</label>
-              <Select defaultValue="09">
+              <Select value={filterMonth} onChange={(e) => setFilterMonth(e.target.value)}>
+                <option value="all">Semua Bulan</option>
                 <option value="01">Januari</option>
                 <option value="02">Februari</option>
                 <option value="03">Maret</option>
