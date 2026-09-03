@@ -90,20 +90,7 @@ export default function AppLayout() {
             >
               <Menu className="h-5 w-5" />
             </Button>
-            
-            {/* Multi-Branch Selector */}
-            <div className="hidden sm:flex items-center gap-2 border rounded-full px-3 py-1.5 bg-background shadow-sm">
-              <Building2 className="w-4 h-4 text-primary" />
-              <select 
-                className="bg-transparent text-sm font-medium outline-none cursor-pointer text-foreground"
-                value={activeBranch}
-                onChange={(e) => setActiveBranch(e.target.value)}
-              >
-                {branches.map(b => (
-                  <option key={b} value={b}>{b}</option>
-                ))}
-              </select>
-            </div>
+
 
             {/* Global Search Button */}
             <Button 

@@ -2,9 +2,10 @@ import { useState } from "react";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "../components/ui/card";
-import { Settings as SettingsIcon, Key, Tag, User, Save, Trash2, Plus } from "lucide-react";
+import { Settings as SettingsIcon, Key, Tag, User, Save, Trash2, Plus, Wallet, ArrowUpCircle } from "lucide-react";
 import { motion } from "framer-motion";
 import { useTheme } from "../contexts/ThemeContext";
+import { useStore } from "../store/useStore";
 
 export default function Settings() {
   const [activeTab, setActiveTab] = useState("profile");
@@ -19,6 +20,30 @@ export default function Settings() {
   ]);
 
   const { theme, setTheme } = useTheme();
+  
+  const { addTransaction } = useStore();
+  const [incomeTitle, setIncomeTitle] = useState("");
+  const [incomeAmount, setIncomeAmount] = useState("");
+  const [incomeSuccess, setIncomeSuccess] = useState(false);
+
+  const handleAddIncome = () => {
+    if(!incomeTitle || !incomeAmount) return;
+    
+    addTransaction({
+      name: incomeTitle,
+      category: "DANA KAMPUS",
+      date: new Date().toLocaleDateString('id-ID', {day: '2-digit', month: 'short', year: 'numeric'}),
+      amount: parseInt(incomeAmount),
+      type: "income",
+      branch: "Pusat",
+      notes: "Injeksi dana manual dari pengaturan"
+    });
+    
+    setIncomeTitle("");
+    setIncomeAmount("");
+    setIncomeSuccess(true);
+    setTimeout(() => setIncomeSuccess(false), 2000);
+  };
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto pb-10">
@@ -46,6 +71,13 @@ export default function Settings() {
             onClick={() => setActiveTab("categories")}
           >
             <Tag className="mr-2 h-4 w-4" /> Manajemen Kategori
+          </Button>
+          <Button 
+            variant={activeTab === "balance" ? "secondary" : "ghost"} 
+            className="w-full justify-start font-medium text-green-600 dark:text-green-500"
+            onClick={() => setActiveTab("balance")}
+          >
+            <Wallet className="mr-2 h-4 w-4" /> Manajemen Saldo
           </Button>
           <Button 
             variant={activeTab === "preferences" ? "secondary" : "ghost"} 
@@ -139,6 +171,36 @@ export default function Settings() {
                     Catatan: Kategori tidak dapat dihapus permanen jika terikat dengan transaksi lama, namun dapat disembunyikan.
                   </p>
                 </CardContent>
+              </Card>
+            </motion.div>
+          )}
+
+          {/* Balance Tab */}
+          {activeTab === "balance" && (
+            <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}>
+              <Card className="border-0 shadow-sm border-green-500/20">
+                <CardHeader>
+                  <CardTitle className="text-green-600 dark:text-green-500 flex items-center gap-2"><ArrowUpCircle className="w-5 h-5"/> Injeksi Dana (Pemasukan)</CardTitle>
+                  <CardDescription>Tambahkan saldo awal atau pemasukan dana kampus/donasi ke sistem.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {incomeSuccess && (
+                    <div className="p-3 bg-green-100 text-green-700 rounded-md text-sm font-medium mb-4">
+                      Pemasukan berhasil ditambahkan ke saldo!
+                    </div>
+                  )}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Sumber Dana / Keterangan</label>
+                    <Input placeholder="Misal: Pencairan Dana Kampus Tahap 2" value={incomeTitle} onChange={(e) => setIncomeTitle(e.target.value)} />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Nominal (Rp)</label>
+                    <Input type="number" placeholder="1000000" min="0" value={incomeAmount} onChange={(e) => setIncomeAmount(e.target.value)} />
+                  </div>
+                </CardContent>
+                <CardFooter>
+                  <Button onClick={handleAddIncome} className="bg-green-600 hover:bg-green-700 w-full sm:w-auto text-white">Tambahkan ke Saldo</Button>
+                </CardFooter>
               </Card>
             </motion.div>
           )}

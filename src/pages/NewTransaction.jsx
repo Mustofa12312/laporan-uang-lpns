@@ -20,7 +20,14 @@ export default function NewTransaction() {
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [category, setCategory] = useState("");
   const [name, setName] = useState("");
-  const [amount, setAmount] = useState("");
+  
+  // Rincian Biaya
+  const [volume, setVolume] = useState(1);
+  const [unit, setUnit] = useState("Buah");
+  const [unitPrice, setUnitPrice] = useState("");
+  
+  const amount = (volume || 0) * (unitPrice || 0);
+
   const [notes, setNotes] = useState("");
 
   const { addTransaction, activeBranch, categories } = useStore();
@@ -99,26 +106,6 @@ export default function NewTransaction() {
           <CardContent className="p-6">
             <form onSubmit={handleSubmit} className="space-y-6">
               
-              {/* Transaction Type Toggle */}
-              <div className="flex gap-2 p-1 bg-secondary rounded-lg">
-                <Button 
-                  type="button" 
-                  variant={txType === 'income' ? 'default' : 'ghost'} 
-                  className={cn("flex-1", txType === 'income' && "bg-green-600 hover:bg-green-700 shadow-md")}
-                  onClick={() => setTxType('income')}
-                >
-                  <ArrowUpCircle className="mr-2 h-4 w-4" /> Pemasukan
-                </Button>
-                <Button 
-                  type="button" 
-                  variant={txType === 'expense' ? 'destructive' : 'ghost'} 
-                  className={cn("flex-1", txType === 'expense' && "shadow-md")}
-                  onClick={() => setTxType('expense')}
-                >
-                  <ArrowDownCircle className="mr-2 h-4 w-4" /> Pengeluaran
-                </Button>
-              </div>
-
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Tanggal <span className="text-destructive">*</span></label>
@@ -141,13 +128,36 @@ export default function NewTransaction() {
                 <Input placeholder={txType === 'income' ? "Misal: Pencairan Dana Kampus" : "Misal: Beli kertas A4"} required value={name} onChange={e => setName(e.target.value)} />
               </div>
 
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Nominal <span className="text-destructive">*</span></label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                    <span className="text-muted-foreground font-medium">Rp</span>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Volume <span className="text-destructive">*</span></label>
+                  <Input type="number" placeholder="1" required min="1" value={volume} onChange={e => setVolume(parseInt(e.target.value) || '')} />
+                </div>
+                
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Satuan <span className="text-destructive">*</span></label>
+                  <Select required value={unit} onChange={e => setUnit(e.target.value)}>
+                    {["Orang", "Buah", "Paket", "Set", "Lembar", "Rim", "Botol", "Porsi", "Dus", "Lusin", "Meter", "Kg", "Liter", "Unit", "Kali"].map(u => (
+                      <option key={u} value={u}>{u}</option>
+                    ))}
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Harga Satuan <span className="text-destructive">*</span></label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                      <span className="text-muted-foreground font-medium">Rp</span>
+                    </div>
+                    <Input type="number" placeholder="0" className="pl-10" required min="1" value={unitPrice} onChange={e => setUnitPrice(e.target.value)} />
                   </div>
-                  <Input type="number" placeholder="0" className={cn("pl-10 text-lg font-medium", txType === 'income' ? "text-green-600 focus-visible:ring-green-500" : "text-destructive focus-visible:ring-destructive")} required min="1" value={amount} onChange={e => setAmount(e.target.value)} />
+                </div>
+              </div>
+
+              <div className="space-y-2 bg-secondary/30 p-4 rounded-xl border border-secondary/50">
+                <label className="text-sm font-medium text-muted-foreground">Total Nominal (Otomatis)</label>
+                <div className="text-2xl font-bold text-destructive">
+                  {new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(amount)}
                 </div>
               </div>
 
