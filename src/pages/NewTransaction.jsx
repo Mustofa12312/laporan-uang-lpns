@@ -5,7 +5,7 @@ import { Input } from "../components/ui/input";
 import { Select } from "../components/ui/select";
 import { Textarea } from "../components/ui/textarea";
 import { Card, CardContent } from "../components/ui/card";
-import { ArrowLeft, Upload, Check, ArrowDownCircle, ArrowUpCircle } from "lucide-react";
+import { ArrowLeft, Check, ArrowDownCircle, ArrowUpCircle } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "../utils/utils";
 import { useStore } from "../store/useStore";
@@ -164,16 +164,6 @@ export default function NewTransaction() {
                 <Textarea placeholder="Detail lebih lanjut..." value={notes} onChange={e => setNotes(e.target.value)} />
               </div>
 
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Bukti Transaksi (Opsional)</label>
-                <div className="border-2 border-dashed border-border rounded-xl p-6 flex flex-col items-center justify-center text-center hover:bg-secondary/50 transition-colors cursor-pointer group">
-                  <div className="w-12 h-12 bg-primary/10 text-primary rounded-full flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
-                    <Upload className="w-6 h-6" />
-                  </div>
-                  <p className="text-sm font-medium">Ketuk untuk upload nota/bukti</p>
-                  <p className="text-xs text-muted-foreground mt-1">JPG, PNG atau PDF (Maks. 5MB)</p>
-                </div>
-              </div>
 
               <div className="pt-4 flex gap-3 border-t">
                 <Button type="button" variant="outline" className="flex-1" onClick={() => navigate(-1)}>Batal</Button>
