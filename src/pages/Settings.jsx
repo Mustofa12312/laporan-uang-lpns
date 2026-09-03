@@ -21,7 +21,7 @@ export default function Settings() {
 
   const { theme, setTheme } = useTheme();
   
-  const { addTransaction, closeBook } = useStore();
+  const { addTransaction, closeBook, archives } = useStore();
   const [incomeTitle, setIncomeTitle] = useState("");
   const [incomeAmount, setIncomeAmount] = useState("");
   const [incomeSuccess, setIncomeSuccess] = useState(false);
@@ -236,6 +236,28 @@ export default function Settings() {
                   <Button onClick={handleCloseBook} variant="destructive" className="w-full sm:w-auto">Tutup Buku & Reset Data</Button>
                 </CardFooter>
               </Card>
+
+              {archives && archives.length > 0 && (
+                <Card className="border-0 shadow-sm mt-6">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">Arsip Laporan</CardTitle>
+                    <CardDescription>
+                      Daftar periode yang telah ditutup.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    {archives.map(archive => (
+                      <div key={archive.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 border rounded-lg bg-secondary/10">
+                        <div>
+                          <h4 className="font-bold text-foreground">{archive.periodName}</h4>
+                          <p className="text-xs text-muted-foreground mt-1">Ditutup pada: {new Date(archive.closedAt).toLocaleDateString('id-ID')}</p>
+                          <p className="text-xs font-medium text-primary mt-1">{archive.transactions.length} Transaksi Tersimpan</p>
+                        </div>
+                      </div>
+                    ))}
+                  </CardContent>
+                </Card>
+              )}
             </motion.div>
           )}
 
