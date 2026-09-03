@@ -7,6 +7,7 @@ import { motion } from "framer-motion";
 import { useTheme } from "../contexts/ThemeContext";
 import { useAuth } from "../contexts/AuthContext";
 import { useStore } from "../store/useStore";
+import { addCategory, updateCategory, deleteCategory } from "../services/category.service";
 
 export default function Settings() {
   const [activeTab, setActiveTab] = useState("profile");
@@ -15,7 +16,7 @@ export default function Settings() {
   
   const { 
     addTransaction, closeBook, archives, 
-    categories, addCategory, updateCategory, deleteCategory,
+    categories,
     budget, setBudget
   } = useStore();
 
@@ -67,21 +68,33 @@ export default function Settings() {
     setTimeout(() => setCloseSuccess(false), 3000);
   };
 
-  const handleAddCategory = () => {
+  const handleAddCategory = async () => {
     if (!newCategoryName.trim()) return;
-    addCategory(newCategoryName.trim());
-    setNewCategoryName("");
+    try {
+      await addCategory({ name: newCategoryName.trim().toUpperCase(), status: "ACTIVE" });
+      setNewCategoryName("");
+    } catch (error) {
+      console.error("Gagal menambah kategori:", error);
+    }
   };
 
-  const handleSaveCategory = (id) => {
+  const handleSaveCategory = async (id) => {
     if (!editingCategoryName.trim()) return;
-    updateCategory(id, { name: editingCategoryName.trim().toUpperCase() });
-    setEditingCategoryId(null);
-    setEditingCategoryName("");
+    try {
+      await updateCategory(id, { name: editingCategoryName.trim().toUpperCase() });
+      setEditingCategoryId(null);
+      setEditingCategoryName("");
+    } catch (error) {
+      console.error("Gagal update kategori:", error);
+    }
   };
 
-  const handleToggleCategoryStatus = (id, currentStatus) => {
-    updateCategory(id, { status: currentStatus === "ACTIVE" ? "INACTIVE" : "ACTIVE" });
+  const handleToggleCategoryStatus = async (id, currentStatus) => {
+    try {
+      await updateCategory(id, { status: currentStatus === "ACTIVE" ? "INACTIVE" : "ACTIVE" });
+    } catch (error) {
+      console.error("Gagal toggle kategori:", error);
+    }
   };
 
   const handleSaveBudget = () => {

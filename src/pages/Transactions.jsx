@@ -10,6 +10,8 @@ import { cn } from "../utils/utils";
 import ContextMenu from "../components/ContextMenu";
 import EditTransactionModal from "../components/EditTransactionModal";
 import { useStore } from "../store/useStore";
+import { useAuth } from "../contexts/AuthContext";
+import { addTransaction, deleteTransaction } from "../services/transaction.service";
 
 export default function Transactions() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -24,7 +26,8 @@ export default function Transactions() {
   // Edit Modal State
   const [editModal, setEditModal] = useState({ isOpen: false, transaction: null });
 
-  const { transactions, activeBranch, deleteTransaction, duplicateTransaction, categories } = useStore();
+  const { transactions, activeBranch, categories } = useStore();
+  const { currentUser } = useAuth();
 
   // Filter States (advanced)
   const [filterMonth, setFilterMonth] = useState("all");
@@ -53,7 +56,10 @@ export default function Transactions() {
     return `${String(d.getDate()).padStart(2, '0')} ${months[d.getMonth()]} ${d.getFullYear()}`;
   };
 
-  const filtered = transactions.filter(t => {
+  // Filter out soft-deleted transactions
+  const activeTransactions = transactions.filter(t => t.status !== 'DELETED');
+
+  const filtered = activeTransactions.filter(t => {
     const matchesSearch = t.name.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesBranch = t.branch === activeBranch;
     const matchesMonth = appliedFilters.month === "all" || getMonthFromDate(t.date) === appliedFilters.month;
@@ -122,8 +128,29 @@ export default function Transactions() {
     }
   };
 
-  const handleDuplicate = (transactionId) => {
-    duplicateTransaction(transactionId);
+  const handleDuplicate = async (transactionId) => {
+    const original = transactions.find(t => t.id === transactionId);
+    if (!original) return;
+    
+    // eslint-disable-next-line no-unused-vars
+    const { id, createdAt, createdBy, createdByName, updatedAt, updatedBy, updatedByName, ...duplicateData } = original;
+    
+    duplicateData.name = `${original.name} (Salinan)`;
+    duplicateData.date = new Date().toISOString().split('T')[0];
+    
+    try {
+      await addTransaction(duplicateData, currentUser);
+    } catch (error) {
+      console.error("Gagal menduplikasi transaksi:", error);
+    }
+  };
+
+  const handleDelete = async (transactionId) => {
+    try {
+      await deleteTransaction(transactionId, currentUser);
+    } catch (error) {
+      console.error("Gagal menghapus transaksi:", error);
+    }
   };
 
   return (
@@ -367,7 +394,7 @@ export default function Transactions() {
         selectedItem={contextMenu.selectedItem}
         onEdit={() => handleEdit(contextMenu.selectedItem?.id)}
         onDuplicate={() => handleDuplicate(contextMenu.selectedItem?.id)}
-        onDelete={() => deleteTransaction(contextMenu.selectedItem?.id)}
+        onDelete={() => handleDelete(contextMenu.selectedItem?.id)}
         onPrint={() => window.print()}
       />
 

@@ -6,10 +6,11 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../co
 import { Search, UserPlus, Shield, User, Power, Edit, X, Save } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useStore } from "../store/useStore";
+import { createUserDocument, updateUser, deleteUser } from "../services/user.service";
 
 export default function Users() {
   const [searchTerm, setSearchTerm] = useState("");
-  const { users, addUser, updateUser, deleteUser } = useStore();
+  const { users } = useStore();
 
   // Modal State
   const [showModal, setShowModal] = useState(false);
@@ -43,23 +44,38 @@ export default function Users() {
     setShowModal(true);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.name || !formData.email) return;
 
-    if (editingUser) {
-      const updates = { name: formData.name, email: formData.email, role: formData.role };
-      if (formData.password) updates.password = formData.password;
-      updateUser(editingUser.id, updates);
-    } else {
-      if (!formData.password) return;
-      addUser({ ...formData, status: "ACTIVE", lastLogin: "Belum pernah login" });
+    try {
+      if (editingUser) {
+        const updates = { name: formData.name, email: formData.email, role: formData.role };
+        await updateUser(editingUser.id, updates);
+      } else {
+        if (!formData.password) return;
+        // In a real app, this should call a Cloud Function to create the Auth user securely
+        // For now, we simulate by creating the document directly
+        await createUserDocument(`USR-${Date.now()}`, { 
+          name: formData.name, 
+          email: formData.email, 
+          role: formData.role, 
+          status: "ACTIVE", 
+          lastLogin: "Belum pernah login" 
+        });
+      }
+      setShowModal(false);
+    } catch (error) {
+      console.error("Gagal menyimpan user:", error);
     }
-    setShowModal(false);
   };
 
-  const handleToggleStatus = (user) => {
-    updateUser(user.id, { status: user.status === "ACTIVE" ? "INACTIVE" : "ACTIVE" });
+  const handleToggleStatus = async (user) => {
+    try {
+      await updateUser(user.id, { status: user.status === "ACTIVE" ? "INACTIVE" : "ACTIVE" });
+    } catch (error) {
+      console.error("Gagal toggle status:", error);
+    }
   };
 
   return (

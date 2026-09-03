@@ -9,6 +9,8 @@ import { ArrowLeft, Check, Plus } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "../utils/utils";
 import { useStore } from "../store/useStore";
+import { useAuth } from "../contexts/AuthContext";
+import { addTransaction } from "../services/transaction.service";
 
 export default function NewTransaction() {
   const navigate = useNavigate();
@@ -30,7 +32,8 @@ export default function NewTransaction() {
 
   const [notes, setNotes] = useState("");
 
-  const { addTransaction, activeBranch, categories } = useStore();
+  const { activeBranch, categories } = useStore();
+  const { currentUser } = useAuth();
 
   const resetForm = () => {
     setName("");
@@ -40,30 +43,35 @@ export default function NewTransaction() {
     setShowSuccess(false);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!category || !name || !amount) return;
 
     setIsLoading(true);
     
-    // Add to Global Store
-    addTransaction({
-      name,
-      category,
-      date,
-      amount: parseInt(amount),
-      type: txType,
-      branch: activeBranch,
-      notes,
-      volume,
-      unit,
-      unitPrice: parseInt(unitPrice)
-    });
+    try {
+      await addTransaction({
+        name,
+        category,
+        date,
+        amount: parseInt(amount),
+        type: txType,
+        branch: activeBranch,
+        notes,
+        volume,
+        unit,
+        unitPrice: parseInt(unitPrice)
+      }, currentUser);
 
-    setTimeout(() => {
+      setTimeout(() => {
+        setIsLoading(false);
+        setShowSuccess(true);
+      }, 600);
+    } catch (error) {
+      console.error("Gagal menyimpan transaksi:", error);
       setIsLoading(false);
-      setShowSuccess(true);
-    }, 600);
+      // In a real app we would show a toast here
+    }
   };
 
   if (showSuccess) {

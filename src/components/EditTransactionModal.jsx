@@ -8,9 +8,12 @@ import { X, Save } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "../utils/utils";
 import { useStore } from "../store/useStore";
+import { useAuth } from "../contexts/AuthContext";
+import { updateTransaction } from "../services/transaction.service";
 
 export default function EditTransactionModal({ isOpen, onClose, transaction }) {
-  const { updateTransaction, categories } = useStore();
+  const { categories } = useStore();
+  const { currentUser } = useAuth();
 
   const [date, setDate] = useState("");
   const [category, setCategory] = useState("");
@@ -41,28 +44,33 @@ export default function EditTransactionModal({ isOpen, onClose, transaction }) {
   const formatRupiah = (val) => 
     new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(val);
 
-  const handleSave = (e) => {
+  const handleSave = async (e) => {
     e.preventDefault();
     if (!category || !name || !amount) return;
 
     setIsLoading(true);
     
-    updateTransaction(transaction.id, {
-      name,
-      category,
-      date,
-      amount: parseInt(amount),
-      type: txType,
-      notes,
-      volume,
-      unit,
-      unitPrice: parseInt(unitPrice)
-    });
+    try {
+      await updateTransaction(transaction.id, {
+        name,
+        category,
+        date,
+        amount: parseInt(amount),
+        type: txType,
+        notes,
+        volume,
+        unit,
+        unitPrice: parseInt(unitPrice)
+      }, currentUser);
 
-    setTimeout(() => {
+      setTimeout(() => {
+        setIsLoading(false);
+        onClose();
+      }, 300);
+    } catch (error) {
+      console.error("Gagal mengupdate transaksi:", error);
       setIsLoading(false);
-      onClose();
-    }, 300);
+    }
   };
 
   if (!isOpen || !transaction) return null;
