@@ -50,8 +50,8 @@ export const AuthProvider = ({ children }) => {
     return unsubscribe;
   }, []);
 
-  const login = async (email, password) => {
-    const result = await loginUser(email, password);
+  const login = async (email, password, rememberMe = false) => {
+    const result = await loginUser(email, password, rememberMe);
     if (!result.success) {
       throw new Error(result.error || "Email atau password salah");
     }

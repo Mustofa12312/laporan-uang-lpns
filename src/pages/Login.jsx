@@ -15,6 +15,7 @@ export default function Login() {
   const [isLoading, setIsLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState("");
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -22,7 +23,7 @@ export default function Login() {
     setIsLoading(true);
 
     try {
-      await login(email, password);
+      await login(email, password, rememberMe);
       setIsLoading(false);
       toast.success("Berhasil masuk ke sistem!");
       navigate("/");
@@ -101,7 +102,12 @@ export default function Login() {
             
             <div className="flex items-center justify-between">
               <label className="flex items-center space-x-2 text-sm text-muted-foreground cursor-pointer">
-                <input type="checkbox" className="rounded border-border text-primary focus:ring-primary h-4 w-4" />
+                <input 
+                  type="checkbox" 
+                  className="rounded border-border text-primary focus:ring-primary h-4 w-4" 
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                />
                 <span>Ingat saya</span>
               </label>
             </div>

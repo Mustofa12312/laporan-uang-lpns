@@ -1,10 +1,13 @@
 // Auth Service
 // Handles all authentication logic with Firebase Auth
 import { auth } from "../lib/firebase/config";
-import { signInWithEmailAndPassword, signOut } from "firebase/auth";
+import { signInWithEmailAndPassword, signOut, setPersistence, browserLocalPersistence, browserSessionPersistence } from "firebase/auth";
 
-export const loginUser = async (email, password) => {
+export const loginUser = async (email, password, rememberMe = false) => {
   try {
+    // Set persistence based on "remember me" choice
+    await setPersistence(auth, rememberMe ? browserLocalPersistence : browserSessionPersistence);
+    
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
     return { success: true, user: userCredential.user };
   } catch (error) {
