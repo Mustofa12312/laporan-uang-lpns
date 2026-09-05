@@ -42,7 +42,11 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const login = async (email, password) => {
-    return await loginUser(email, password);
+    const result = await loginUser(email, password);
+    if (!result.success) {
+      throw new Error(result.error || "Email atau password salah");
+    }
+    return result;
   };
 
   const logout = async () => {

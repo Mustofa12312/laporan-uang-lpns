@@ -30,7 +30,10 @@ service cloud.firestore {
       // Anyone logged in can read basic profiles
       allow read: if isAuthenticated();
       
-      // Only Admin can create/update/delete users
+      // Users can create their own profile document (for initial setup)
+      allow create: if isAuthenticated() && request.auth.uid == userId;
+      
+      // Only Admin can create/update/delete other users
       allow create, update, delete: if isAuthenticated() && getUserRole() == 'ADMIN';
       
       // Users can update their own profile (except role)
