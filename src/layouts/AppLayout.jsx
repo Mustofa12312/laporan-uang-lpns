@@ -59,12 +59,12 @@ export default function AppLayout() {
       <aside className="hidden md:flex flex-col w-64 fixed inset-y-0 border-r bg-card z-50">
         <div className="p-6">
           <div className="flex items-center gap-3 text-primary">
-            <div className="bg-primary/10 p-2 rounded-xl">
-              <Building className="w-6 h-6" />
+            <div className="rounded-xl overflow-hidden shadow-md shadow-primary/20">
+              <img src="/logo.png" alt="LPNS Logo" className="w-10 h-10 object-cover" />
             </div>
             <div>
               <h1 className="text-xl font-bold tracking-tight">LPNS</h1>
-              <p className="text-xs text-muted-foreground">Laporan Keuangan</p>
+              <p className="text-xs text-muted-foreground font-medium">Laporan Uang</p>
             </div>
           </div>
         </div>
