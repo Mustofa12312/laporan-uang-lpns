@@ -127,10 +127,6 @@ export default function Login() {
           <p className="text-sm text-muted-foreground">
             Hanya untuk pengurus internal LPNS
           </p>
-          <div className="text-xs text-muted-foreground/70 bg-secondary/50 rounded-lg p-3 w-full">
-            <p className="font-medium mb-1">Akun Demo:</p>
-            <p>admin@lpns.org / admin123</p>
-          </div>
         </CardFooter>
       </Card>
     </motion.div>
