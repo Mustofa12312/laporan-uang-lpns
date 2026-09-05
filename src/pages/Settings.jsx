@@ -104,7 +104,7 @@ export default function Settings() {
     try {
       await addTransaction({
         name: incomeTitle,
-        category: "DANA KAMPUS",
+        category: "BMS dan Ranting",
         date: new Date().toISOString().split('T')[0],
         amount: parseInt(incomeAmount),
         type: "income",
@@ -422,7 +422,7 @@ export default function Settings() {
               <Card className="border-0 shadow-sm border-green-500/20">
                 <CardHeader>
                   <CardTitle className="text-green-600 dark:text-green-500 flex items-center gap-2"><ArrowUpCircle className="w-5 h-5"/> Injeksi Dana (Pemasukan)</CardTitle>
-                  <CardDescription>Tambahkan saldo awal atau pemasukan dana kampus/donasi ke sistem.</CardDescription>
+                  <CardDescription>Tambahkan saldo awal atau pemasukan dana BMS dan Ranting ke sistem.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
