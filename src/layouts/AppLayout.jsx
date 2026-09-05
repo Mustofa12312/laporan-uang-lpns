@@ -17,7 +17,7 @@ import CommandPalette from "../components/CommandPalette";
 import { useStore } from "../store/useStore";
 import { useAuth } from "../contexts/AuthContext";
 import { useFirebaseSync } from "../hooks/useFirebaseSync";
-import { Toaster } from "react-hot-toast";
+import { Toaster, toast } from "react-hot-toast";
 
 export default function AppLayout() {
   const { isAuthenticated, currentUser, logout } = useAuth();

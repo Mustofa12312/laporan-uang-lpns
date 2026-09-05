@@ -8,6 +8,7 @@ import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend, BarChart, Ba
 import { cn } from "../utils/utils";
 import { useStore } from "../store/useStore";
 import { exportToPDF } from "../services/export.service";
+import { toast } from "react-hot-toast";
 
 const formatRupiah = (amount) => {
   return new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(amount);
@@ -137,12 +138,18 @@ export default function Dashboard() {
   };
 
   const handleDownloadReport = () => {
-    const expenses = branchTransactions.filter(t => t.type === 'expense').map(t => ({
+    const expenses = branchTransactions.filter(t => t.type === 'expense');
+    if (expenses.length === 0) {
+      toast.error("Tidak ada data pengeluaran untuk diunduh pada periode ini.");
+      return;
+    }
+    
+    const formattedExpenses = expenses.map(t => ({
       ...t,
       date: formatDateForDisplay(t.date)
     }));
     const period = filterThisMonth ? `Bulan ${new Date().toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })}` : "Semua Periode";
-    exportToPDF(expenses, period, false);
+    exportToPDF(formattedExpenses, period, false);
   };
 
   return (

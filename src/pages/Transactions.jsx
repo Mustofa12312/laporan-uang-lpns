@@ -164,13 +164,20 @@ export default function Transactions() {
           <Button variant="outline" className="hidden sm:flex shadow-sm" onClick={handleExportCSV}>
             <FileDown className="mr-2 h-4 w-4" /> Export
           </Button>
-          <Button asChild className="shadow-lg shadow-primary/20 hover:scale-105 transition-transform">
+          <Button asChild className="hidden md:flex shadow-lg shadow-primary/20 hover:scale-105 transition-transform">
             <Link to="/transactions/new">
-              <Plus className="mr-2 h-4 w-4" /> Catat 
+              <Plus className="mr-2 h-4 w-4" /> Catat Transaksi
             </Link>
           </Button>
         </div>
       </div>
+
+      {/* Floating Action Button (Mobile Only) */}
+      <Button asChild className="md:hidden fixed bottom-20 right-4 h-14 w-14 rounded-full shadow-xl shadow-primary/40 z-50 p-0 flex items-center justify-center hover:scale-105 active:scale-95 transition-all">
+        <Link to="/transactions/new">
+          <Plus className="h-7 w-7" />
+        </Link>
+      </Button>
 
       {/* Filter and Search Bar */}
       <div className="flex flex-col sm:flex-row gap-3">
