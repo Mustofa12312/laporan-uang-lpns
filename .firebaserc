@@ -1,5 +1,7 @@
 {
   "projects": {
-    "default": "demo-laporan-lpns"
-  }
+    "default": "laporanlpns"
+  },
+  "targets": {},
+  "etags": {}
 }

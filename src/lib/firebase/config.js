@@ -21,8 +21,8 @@ export const storage = getStorage(app);
 
 // Connect to Emulators in Development
 if (import.meta.env.DEV) {
-  connectAuthEmulator(auth, "http://localhost:9099", { disableWarnings: true });
-  connectFirestoreEmulator(db, 'localhost', 8080);
-  connectStorageEmulator(storage, 'localhost', 9199);
-  console.log("Firebase Emulators Connected!");
+  // connectAuthEmulator(auth, "http://localhost:9099", { disableWarnings: true });
+  // connectFirestoreEmulator(db, 'localhost', 8080);
+  // connectStorageEmulator(storage, 'localhost', 9199);
+  // console.log("Firebase Emulators Connected!");
 }
