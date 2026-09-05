@@ -13,6 +13,9 @@ export default defineConfig({
       devOptions: {
         enabled: true
       },
+      workbox: {
+        maximumFileSizeToCacheInBytes: 5000000
+      },
       manifest: {
         name: 'Laporan Keuangan LPNS',
         short_name: 'LPNS',

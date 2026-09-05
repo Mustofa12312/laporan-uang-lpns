@@ -3,7 +3,6 @@ import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Select } from "./ui/select";
 import { Textarea } from "./ui/textarea";
-import { Card, CardContent } from "./ui/card";
 import { X, Save } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "../utils/utils";

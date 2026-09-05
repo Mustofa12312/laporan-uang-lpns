@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "../components/ui/card";
-import { Settings as SettingsIcon, Tag, User, Save, Trash2, Plus, Wallet, ArrowUpCircle, Check, X, Edit2 } from "lucide-react";
+import { Settings as SettingsIcon, Tag, User, Trash2, Plus, Wallet, ArrowUpCircle, Check, X, Edit2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useTheme } from "../contexts/ThemeContext";
 import { useAuth } from "../contexts/AuthContext";

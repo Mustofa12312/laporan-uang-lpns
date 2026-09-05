@@ -1,13 +1,46 @@
 import { useState, useEffect, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../components/ui/card";
 import { Button } from "../components/ui/button";
-import { Wallet, TrendingUp, FileText, PieChartIcon, ArrowUpIcon, ArrowDownIcon, MoreHorizontal } from "lucide-react";
+import { Wallet, TrendingUp, PieChartIcon, ArrowUpIcon, ArrowDownIcon, MoreHorizontal } from "lucide-react";
 import { Skeleton } from "../components/ui/skeleton";
 import { motion } from "framer-motion";
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
 import { cn } from "../utils/utils";
 import { useStore } from "../store/useStore";
 import { exportToPDF } from "../services/export.service";
+
+const formatRupiah = (amount) => {
+  return new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(amount);
+};
+
+const CustomTooltip = ({ active, payload, label }) => {
+  if (active && payload && payload.length) {
+    if (payload[0].dataKey) {
+      return (
+        <div className="bg-popover border border-border p-3 rounded-lg shadow-lg">
+          <p className="font-semibold text-foreground mb-2">{label}</p>
+          {payload.map((entry, index) => (
+            <div key={index} className="flex items-center gap-2 text-sm">
+              <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: entry.color }}></div>
+              <span className="text-muted-foreground">{entry.name}:</span>
+              <span className="font-medium text-foreground">{formatRupiah(entry.value)}</span>
+            </div>
+          ))}
+        </div>
+      );
+    }
+    
+    return (
+      <div className="bg-popover border border-border p-3 rounded-lg shadow-lg">
+        <p className="font-semibold text-foreground">{payload[0].name}</p>
+        <p className="text-primary font-bold mt-1">
+          {formatRupiah(payload[0].value)}
+        </p>
+      </div>
+    );
+  }
+  return null;
+};
 
 export default function Dashboard() {
   const [isLoading, setIsLoading] = useState(true);
@@ -17,10 +50,6 @@ export default function Dashboard() {
     const timer = setTimeout(() => setIsLoading(false), 800);
     return () => clearTimeout(timer);
   }, []);
-
-  const formatRupiah = (amount) => {
-    return new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(amount);
-  };
 
   const formatDateForDisplay = (dateStr) => {
     const d = new Date(dateStr);
@@ -105,35 +134,6 @@ export default function Dashboard() {
   const itemVariants = {
     hidden: { y: 20, opacity: 0 },
     show: { y: 0, opacity: 1, transition: { type: "spring", stiffness: 300, damping: 24 } }
-  };
-
-  const CustomTooltip = ({ active, payload, label }) => {
-    if (active && payload && payload.length) {
-      if (payload[0].dataKey) {
-        return (
-          <div className="bg-popover border border-border p-3 rounded-lg shadow-lg">
-            <p className="font-semibold text-foreground mb-2">{label}</p>
-            {payload.map((entry, index) => (
-              <div key={index} className="flex items-center gap-2 text-sm">
-                <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: entry.color }}></div>
-                <span className="text-muted-foreground">{entry.name}:</span>
-                <span className="font-medium text-foreground">{formatRupiah(entry.value)}</span>
-              </div>
-            ))}
-          </div>
-        );
-      }
-      
-      return (
-        <div className="bg-popover border border-border p-3 rounded-lg shadow-lg">
-          <p className="font-semibold text-foreground">{payload[0].name}</p>
-          <p className="text-primary font-bold mt-1">
-            {formatRupiah(payload[0].value)}
-          </p>
-        </div>
-      );
-    }
-    return null;
   };
 
   const handleDownloadReport = () => {
