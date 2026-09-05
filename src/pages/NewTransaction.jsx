@@ -13,6 +13,12 @@ import { useAuth } from "../contexts/AuthContext";
 import { addTransaction } from "../services/transaction.service";
 import { toast } from "react-hot-toast";
 
+// Helper for formatting number with dots
+const formatNumberDots = (val) => {
+  if (!val) return "";
+  return new Intl.NumberFormat("id-ID").format(val);
+};
+
 export default function NewTransaction() {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
@@ -26,6 +32,11 @@ export default function NewTransaction() {
   const [volume, setVolume] = useState(1);
   const [unit, setUnit] = useState("Buah");
   const [unitPrice, setUnitPrice] = useState("");
+  
+  const handleUnitPriceChange = (e) => {
+    const rawValue = e.target.value.replace(/\D/g, "");
+    setUnitPrice(rawValue);
+  };
   
   const amount = (volume || 0) * (unitPrice || 0);
 
@@ -174,7 +185,14 @@ export default function NewTransaction() {
                     <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
                       <span className="text-muted-foreground font-medium">Rp</span>
                     </div>
-                    <Input type="number" placeholder="0" className="pl-10 font-medium" required min="1" value={unitPrice} onChange={e => setUnitPrice(e.target.value)} />
+                    <Input 
+                      type="text" 
+                      placeholder="0" 
+                      className="pl-10 font-medium" 
+                      required 
+                      value={formatNumberDots(unitPrice)} 
+                      onChange={handleUnitPriceChange} 
+                    />
                   </div>
                 </div>
               </div>

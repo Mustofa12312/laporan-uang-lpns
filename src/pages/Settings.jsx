@@ -14,6 +14,12 @@ import { changePassword } from "../services/auth.service";
 import { updateGeneralSettings } from "../services/settings.service";
 import { toast } from "react-hot-toast";
 
+// Helper for formatting number with dots
+const formatNumberDots = (val) => {
+  if (!val) return "";
+  return new Intl.NumberFormat("id-ID").format(val);
+};
+
 export default function Settings() {
   const [activeTab, setActiveTab] = useState("profile");
   const { theme, setTheme } = useTheme();
@@ -62,6 +68,11 @@ export default function Settings() {
   const [incomeTitle, setIncomeTitle] = useState("");
   const [incomeAmount, setIncomeAmount] = useState("");
   
+  const handleIncomeAmountChange = (e) => {
+    const rawValue = e.target.value.replace(/\D/g, "");
+    setIncomeAmount(rawValue);
+  };
+  
   // Close book
   const [periodName, setPeriodName] = useState("");
 
@@ -72,7 +83,12 @@ export default function Settings() {
 
   // Budget
   const [editBudget, setEditBudget] = useState(false);
-  const [budgetInput, setBudgetInput] = useState(budget);
+  const [budgetInput, setBudgetInput] = useState(budget.toString());
+  
+  const handleBudgetInputChange = (e) => {
+    const rawValue = e.target.value.replace(/\D/g, "");
+    setBudgetInput(rawValue);
+  };
 
   const handleAddIncome = async () => {
     if(!incomeTitle || !incomeAmount) return;
@@ -365,9 +381,13 @@ export default function Settings() {
                 <CardContent>
                   {editBudget ? (
                     <div className="flex gap-2">
-                      <Input type="number" value={budgetInput} onChange={(e) => setBudgetInput(e.target.value)} />
+                      <Input 
+                        type="text" 
+                        value={formatNumberDots(budgetInput)} 
+                        onChange={handleBudgetInputChange} 
+                      />
                       <Button onClick={handleSaveBudget}>Simpan</Button>
-                      <Button variant="outline" onClick={() => { setEditBudget(false); setBudgetInput(budget); }}>Batal</Button>
+                      <Button variant="outline" onClick={() => { setEditBudget(false); setBudgetInput(budget.toString()); }}>Batal</Button>
                     </div>
                   ) : (
                     <div className="flex items-center justify-between">
@@ -390,7 +410,12 @@ export default function Settings() {
                   </div>
                   <div className="space-y-2">
                     <label className="text-sm font-medium">Nominal (Rp)</label>
-                    <Input type="number" placeholder="1000000" min="0" value={incomeAmount} onChange={(e) => setIncomeAmount(e.target.value)} />
+                    <Input 
+                      type="text" 
+                      placeholder="1.000.000" 
+                      value={formatNumberDots(incomeAmount)} 
+                      onChange={handleIncomeAmountChange} 
+                    />
                   </div>
                 </CardContent>
                 <CardFooter>
