@@ -1,0 +1,22 @@
+{"users": [
+{
+  "localId": "RJHBcvrBMwa5UpFuAMHpBVh4zTc2",
+  "email": "admin@laporanlpns.com",
+  "emailVerified": false,
+  "passwordHash": "DT+2/3guassjF/RCJ0aG5M/5+a/V6Qa5K1L816kTzqzGvQeJtJkhKQeYTZOWsbpE7GreI1Hqg7X7OaZI0FUw9Q==",
+  "salt": "VqNjc/ys4bwd6w==",
+  "lastSignedInAt": "1788627963708",
+  "createdAt": "1788609281614",
+  "disabled": false,
+  "providerUserInfo": []
+},
+{
+  "localId": "bpzHaS7x8kQnv7lF8lgsKM5XuGm2",
+  "email": "admin@laporanpns.com",
+  "emailVerified": false,
+  "passwordHash": "jziXwuvbo6s2/BJqIiVT0UhPmQcIFqy11OD0pAbXiMX9D6K8DSpKPLUblpoCPIMRG91daIOocrG7LAKlYESfHg==",
+  "salt": "eUSQ+jovN7NHog==",
+  "lastSignedInAt": "1788610856166",
+  "createdAt": "1788610651319",
+  "providerUserInfo": []
+}]}

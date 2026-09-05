@@ -17,8 +17,6 @@ export default function NewTransaction() {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
-  const [txType, setTxType] = useState("expense"); // 'income' | 'expense'
-  
   // Form State
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [category, setCategory] = useState("");
@@ -59,7 +57,7 @@ export default function NewTransaction() {
         category,
         date,
         amount: parseInt(amount),
-        type: txType,
+        type: "expense",
         branch: activeBranch,
         notes,
         volume,
@@ -131,25 +129,7 @@ export default function NewTransaction() {
           <CardContent className="p-6">
             <form onSubmit={handleSubmit} className="space-y-6">
               
-              {/* Type Toggle */}
-              <div className="grid grid-cols-2 gap-2 bg-secondary/30 p-1.5 rounded-xl">
-                <Button 
-                  type="button"
-                  variant={txType === "expense" ? "default" : "ghost"}
-                  className={cn("w-full transition-all duration-300", txType === "expense" && "bg-destructive text-white hover:bg-destructive/90 shadow-md")}
-                  onClick={() => setTxType("expense")}
-                >
-                  Pengeluaran
-                </Button>
-                <Button 
-                  type="button"
-                  variant={txType === "income" ? "default" : "ghost"}
-                  className={cn("w-full transition-all duration-300", txType === "income" && "bg-green-600 text-white hover:bg-green-700 shadow-md")}
-                  onClick={() => setTxType("income")}
-                >
-                  Pemasukan
-                </Button>
-              </div>
+              {/* Removed Type Toggle */}
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -170,7 +150,7 @@ export default function NewTransaction() {
 
               <div className="space-y-2">
                 <label className="text-sm font-medium">Keterangan <span className="text-destructive">*</span></label>
-                <Input placeholder={txType === 'income' ? "Misal: Pencairan Dana Kampus" : "Misal: Beli kertas A4"} required value={name} onChange={e => setName(e.target.value)} />
+                <Input placeholder="Misal: Beli kertas A4" required value={name} onChange={e => setName(e.target.value)} />
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -199,12 +179,9 @@ export default function NewTransaction() {
                 </div>
               </div>
 
-              <div className={cn(
-                "space-y-2 p-5 rounded-xl border transition-colors duration-300", 
-                txType === 'income' ? "bg-green-500/5 border-green-500/20" : "bg-destructive/5 border-destructive/20"
-              )}>
+              <div className="space-y-2 p-5 rounded-xl border transition-colors duration-300 bg-destructive/5 border-destructive/20">
                 <label className="text-sm font-medium text-muted-foreground">Total Nominal (Otomatis)</label>
-                <div className={cn("text-3xl font-bold tracking-tight", txType === 'income' ? "text-green-600 dark:text-green-500" : "text-destructive")}>
+                <div className="text-3xl font-bold tracking-tight text-destructive">
                   {new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(amount)}
                 </div>
               </div>
@@ -217,7 +194,7 @@ export default function NewTransaction() {
 
               <div className="pt-6 flex gap-3 border-t">
                 <Button type="button" variant="outline" className="flex-1" onClick={() => navigate(-1)}>Batal</Button>
-                <Button type="submit" className={cn("flex-1 shadow-lg", txType === 'income' ? "bg-green-600 hover:bg-green-700 shadow-green-600/25" : "shadow-primary/25")} disabled={isLoading}>
+                <Button type="submit" className="flex-1 shadow-lg shadow-primary/25" disabled={isLoading}>
                   {isLoading ? "Menyimpan..." : "Simpan Transaksi"}
                 </Button>
               </div>

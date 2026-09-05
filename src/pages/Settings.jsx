@@ -11,6 +11,7 @@ import { addCategory, updateCategory, deleteCategory } from "../services/categor
 import { closeBook } from "../services/report.service";
 import { addTransaction } from "../services/transaction.service";
 import { changePassword } from "../services/auth.service";
+import { updateGeneralSettings } from "../services/settings.service";
 import { toast } from "react-hot-toast";
 
 export default function Settings() {
@@ -146,9 +147,15 @@ export default function Settings() {
     }
   };
 
-  const handleSaveBudget = () => {
-    setBudget(parseInt(budgetInput) || 0);
-    setEditBudget(false);
+  const handleSaveBudget = async () => {
+    try {
+      await updateGeneralSettings({ budget: parseInt(budgetInput) || 0 });
+      setEditBudget(false);
+      toast.success("Target anggaran berhasil diperbarui");
+    } catch (error) {
+      console.error("Gagal update budget:", error);
+      toast.error("Gagal update budget");
+    }
   };
 
   const formatRupiah = (amount) => 
@@ -379,7 +386,7 @@ export default function Settings() {
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
                     <label className="text-sm font-medium">Sumber Dana / Keterangan</label>
-                    <Input placeholder="Misal: Pencairan Dana Kampus Tahap 2" value={incomeTitle} onChange={(e) => setIncomeTitle(e.target.value)} />
+                    <Input placeholder="Misal: Pencairan Dana BMS" value={incomeTitle} onChange={(e) => setIncomeTitle(e.target.value)} />
                   </div>
                   <div className="space-y-2">
                     <label className="text-sm font-medium">Nominal (Rp)</label>

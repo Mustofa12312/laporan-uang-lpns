@@ -42,6 +42,18 @@ service cloud.firestore {
     }
 
     // Settings collection rules
+    // Categories collection rules
+    match /categories/{categoryId} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() && (getUserRole() == "ADMIN" || getUserRole() == "SEKRETARIS");
+    }
+
+    // Archives collection rules
+    match /archives/{archiveId} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() && (getUserRole() == "ADMIN" || getUserRole() == "BENDAHARA");
+    }
+
     match /settings/{document=**} {
       // Read access to all authenticated users
       allow read: if isAuthenticated();

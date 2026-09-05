@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { db } from '../lib/firebase/config';
-import { collection, onSnapshot, query, orderBy, where } from 'firebase/firestore';
+import { collection, onSnapshot, query, orderBy, where, doc } from 'firebase/firestore';
 import { useStore } from '../store/useStore';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -9,6 +9,7 @@ export const useFirebaseSync = () => {
   const setCategories = useStore((s) => s.setCategories);
   const setUsers = useStore((s) => s.setUsers);
   const setArchives = useStore((s) => s.setArchives);
+  const setBudget = useStore((s) => s.setBudget);
   const { isAuthenticated } = useAuth();
 
   useEffect(() => {
@@ -18,6 +19,16 @@ export const useFirebaseSync = () => {
     const usersUnsub = onSnapshot(collection(db, 'users'), (snapshot) => {
       const usersData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       setUsers(usersData);
+    });
+
+    // Listen to settings
+    const settingsUnsub = onSnapshot(doc(db, 'settings', 'general'), (docSnap) => {
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        if (data.budget !== undefined) {
+          setBudget(data.budget);
+        }
+      }
     });
 
     // Listen to categories
@@ -67,6 +78,7 @@ export const useFirebaseSync = () => {
     return () => {
       usersUnsub();
       categoriesUnsub();
+      settingsUnsub();
       txUnsub();
       archivesUnsub();
     };

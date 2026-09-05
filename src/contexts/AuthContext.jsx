@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { auth, db } from '../lib/firebase/config';
 import { onAuthStateChanged } from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { loginUser, logoutUser } from '../services/auth.service';
 
 const AuthContext = createContext(null);
@@ -25,8 +25,17 @@ export const AuthProvider = ({ children }) => {
           if (userDoc.exists()) {
             setCurrentUser({ uid: user.uid, email: user.email, ...userDoc.data() });
           } else {
-            // Fallback if document doesn't exist yet
-            setCurrentUser({ uid: user.uid, email: user.email, name: user.displayName || 'User', role: 'UNKNOWN' });
+            // Fallback if document doesn't exist yet (auto-create admin profile)
+            const newUserData = {
+              name: user.displayName || 'Admin User',
+              email: user.email,
+              role: 'ADMIN',
+              branch: 'Pusat',
+              status: 'active',
+              createdAt: new Date().toISOString()
+            };
+            await setDoc(doc(db, 'users', user.uid), newUserData);
+            setCurrentUser({ uid: user.uid, ...newUserData });
           }
         } catch (error) {
           console.error("Error fetching user data:", error);
