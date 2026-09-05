@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "../components/ui/card";
-import { Settings as SettingsIcon, Tag, User, Trash2, Plus, Wallet, ArrowUpCircle, Check, X, Edit2 } from "lucide-react";
+import { Settings as SettingsIcon, Tag, User, Trash2, Plus, Wallet, ArrowUpCircle, Check, X, Edit2, LogOut } from "lucide-react";
 import { motion } from "framer-motion";
 import { useTheme } from "../contexts/ThemeContext";
 import { useAuth } from "../contexts/AuthContext";
@@ -21,9 +21,16 @@ const formatNumberDots = (val) => {
 };
 
 export default function Settings() {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("profile");
   const { theme, setTheme } = useTheme();
-  const { currentUser } = useAuth();
+  const { currentUser, logout } = useAuth();
+  
+  const handleLogout = async () => {
+    toast.success("Berhasil keluar dari sistem");
+    await logout();
+    navigate("/login");
+  };
   
   // Password State
   const [newPassword, setNewPassword] = useState("");
@@ -279,6 +286,19 @@ export default function Settings() {
                     {isChangingPassword ? "Menyimpan..." : "Perbarui Password"}
                   </Button>
                 </CardContent>
+              </Card>
+
+              {/* Logout (Mobile Friendly) */}
+              <Card className="border-0 shadow-sm border-destructive/20 mt-6 md:hidden">
+                <CardHeader>
+                  <CardTitle className="text-destructive flex items-center gap-2"><LogOut className="w-5 h-5"/> Keluar Aplikasi</CardTitle>
+                  <CardDescription>Akhiri sesi Anda dan keluar dari sistem.</CardDescription>
+                </CardHeader>
+                <CardFooter>
+                  <Button onClick={handleLogout} variant="destructive" className="w-full text-white font-medium">
+                    Keluar dari Sistem
+                  </Button>
+                </CardFooter>
               </Card>
             </motion.div>
           )}
