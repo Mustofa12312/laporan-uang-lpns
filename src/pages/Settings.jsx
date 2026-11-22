@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
+import { Select } from "../components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "../components/ui/card";
-import { Settings as SettingsIcon, Tag, User, Trash2, Plus, Wallet, ArrowUpCircle, Check, X, Edit2, LogOut } from "lucide-react";
+import { Settings as SettingsIcon, Tag, User, Trash2, Plus, Wallet, ArrowUpCircle, Check, X, Edit2, LogOut, Archive, TrendingUp, AlertTriangle } from "lucide-react";
 import { motion } from "framer-motion";
 import { useTheme } from "../contexts/ThemeContext";
 import { useAuth } from "../contexts/AuthContext";
@@ -14,6 +15,7 @@ import { addTransaction } from "../services/transaction.service";
 import { changePassword } from "../services/auth.service";
 import { updateGeneralSettings } from "../services/settings.service";
 import { toast } from "react-hot-toast";
+import { cn } from "../utils/utils";
 
 // Helper for formatting number with dots
 const formatNumberDots = (val) => {
