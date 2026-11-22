@@ -105,14 +105,8 @@ export default function Settings() {
 
   // Budget
   const [editBudget, setEditBudget] = useState(false);
-  const [budgetInput, setBudgetInput] = useState(budget ? budget.toString() : "20000000");
+  const [budgetInput, setBudgetInput] = useState("");
   const [isSavingBudget, setIsSavingBudget] = useState(false);
-
-  useEffect(() => {
-    if (!editBudget && budget !== undefined) {
-      setBudgetInput(budget.toString());
-    }
-  }, [budget, editBudget]);
   
   const handleBudgetInputChange = (e) => {
     const rawValue = e.target.value.replace(/\D/g, "");

@@ -82,5 +82,5 @@ export const useFirebaseSync = () => {
       txUnsub();
       archivesUnsub();
     };
-  }, [isAuthenticated, setTransactions, setCategories, setUsers, setArchives]);
+  }, [isAuthenticated, setTransactions, setCategories, setUsers, setArchives, setBudget]);
 };
