@@ -12,6 +12,7 @@ import EditTransactionModal from "../components/EditTransactionModal";
 import { useStore } from "../store/useStore";
 import { useAuth } from "../contexts/AuthContext";
 import { addTransaction, deleteTransaction } from "../services/transaction.service";
+import { toast } from "react-hot-toast";
 
 export default function Transactions() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -94,6 +95,11 @@ export default function Transactions() {
   const hasActiveFilters = appliedFilters.month !== "all" || appliedFilters.type !== "all" || appliedFilters.category !== "all" || appliedFilters.minAmount;
 
   const handleExportCSV = () => {
+    if (!filtered || filtered.length === 0) {
+      toast.error("Tidak ada transaksi untuk diekspor");
+      return;
+    }
+
     const headers = ["ID Transaksi", "Tanggal", "Tipe", "Kategori", "Uraian", "Nominal", "Cabang"];
     const csvContent = [
       headers.join(","),
@@ -118,6 +124,7 @@ export default function Transactions() {
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
+      toast.success("File CSV berhasil diekspor");
     }
   };
 
@@ -140,16 +147,24 @@ export default function Transactions() {
     
     try {
       await addTransaction(duplicateData, currentUser);
+      toast.success("Transaksi berhasil diduplikasi");
     } catch (error) {
       console.error("Gagal menduplikasi transaksi:", error);
+      toast.error(error.message || "Gagal menduplikasi transaksi");
     }
   };
 
   const handleDelete = async (transactionId) => {
+    if (!window.confirm("Apakah Anda yakin ingin menghapus transaksi ini?")) {
+      return;
+    }
+
     try {
       await deleteTransaction(transactionId, currentUser);
+      toast.success("Transaksi berhasil dihapus");
     } catch (error) {
       console.error("Gagal menghapus transaksi:", error);
+      toast.error(error.message || "Gagal menghapus transaksi");
     }
   };
 

@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import { Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../components/ui/card";
 import { Button } from "../components/ui/button";
 import { Wallet, TrendingUp, PieChartIcon, ArrowUpIcon, ArrowDownIcon, MoreHorizontal } from "lucide-react";
@@ -316,7 +317,11 @@ export default function Dashboard() {
           <Card className="border-0 shadow-md flex-[2] overflow-hidden flex flex-col">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-base">Transaksi Terbaru</CardTitle>
-              <Button variant="ghost" size="icon" className="h-6 w-6"><MoreHorizontal className="h-4 w-4" /></Button>
+              <Button asChild variant="ghost" size="icon" className="h-6 w-6">
+                <Link to="/transactions" title="Lihat Semua Transaksi">
+                  <MoreHorizontal className="h-4 w-4" />
+                </Link>
+              </Button>
             </CardHeader>
             <CardContent className="flex-1 overflow-y-auto pr-2 pb-2">
               <div className="space-y-4">

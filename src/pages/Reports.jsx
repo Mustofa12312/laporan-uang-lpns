@@ -7,6 +7,7 @@ import { motion } from "framer-motion";
 import { exportToExcel, exportToPDF } from "../services/export.service";
 import { cn } from "../utils/utils";
 import { useStore } from "../store/useStore";
+import { toast } from "react-hot-toast";
 
 export default function Reports() {
   const [isLocked, setIsLocked] = useState(false);
@@ -69,11 +70,21 @@ export default function Reports() {
   const periodName = `${filterMonth === "all" ? "Semua Bulan" : filterMonth} ${filterYear}`;
 
   const handleExportExcel = () => {
+    if (!mappedTransactions || mappedTransactions.length === 0) {
+      toast.error("Tidak ada data transaksi untuk diekspor");
+      return;
+    }
     exportToExcel(mappedTransactions, periodName);
+    toast.success("Laporan Excel berhasil diunduh");
   };
 
   const handleExportPDF = () => {
+    if (!mappedTransactions || mappedTransactions.length === 0) {
+      toast.error("Tidak ada data transaksi untuk diekspor");
+      return;
+    }
     exportToPDF(mappedTransactions, periodName, isApproved);
+    toast.success("Laporan PDF berhasil diunduh");
   };
 
   const handleToggleLock = () => {

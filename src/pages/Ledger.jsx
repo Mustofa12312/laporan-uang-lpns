@@ -30,7 +30,7 @@ export default function Ledger() {
     return new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(amount);
   };
 
-  const { transactions, activeBranch, deleteTransaction, duplicateTransaction } = useStore();
+  const { transactions, activeBranch } = useStore();
 
   const getMonthFromDate = (dateStr) => {
     const d = new Date(dateStr);
