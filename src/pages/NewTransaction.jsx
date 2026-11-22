@@ -7,6 +7,7 @@ import { Textarea } from "../components/ui/textarea";
 import { Card, CardContent } from "../components/ui/card";
 import { ArrowLeft, Check, Plus } from "lucide-react";
 import { motion } from "framer-motion";
+import { cn } from "../utils/utils";
 import { useStore } from "../store/useStore";
 import { useAuth } from "../contexts/AuthContext";
 import { addTransaction } from "../services/transaction.service";

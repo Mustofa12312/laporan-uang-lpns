@@ -20,8 +20,8 @@ export default function Users() {
   const [isLoading, setIsLoading] = useState(false);
 
   const filtered = users.filter(u => 
-    u.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    u.email.toLowerCase().includes(searchTerm.toLowerCase())
+    (u.name || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (u.email || "").toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const RoleBadge = ({ role }) => {
@@ -127,7 +127,12 @@ export default function Users() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {filtered.map((user, index) => (
+        {filtered.length === 0 ? (
+          <div className="col-span-full text-center py-12 text-muted-foreground border border-dashed rounded-xl bg-card">
+            Tidak ada data pengguna yang ditemukan.
+          </div>
+        ) : (
+          filtered.map((user, index) => (
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}

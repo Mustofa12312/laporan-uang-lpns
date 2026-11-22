@@ -130,9 +130,11 @@ export default function AppLayout() {
               <p className="text-sm font-medium leading-none text-foreground">{currentUser?.name || "User"}</p>
               <p className="text-xs text-muted-foreground mt-1">{currentUser?.role || "—"} • {activeBranch}</p>
             </div>
-            <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center border-2 border-primary/20 cursor-pointer hover:scale-105 transition-transform">
-              <span className="text-sm font-bold text-primary">{userInitials}</span>
-            </div>
+            <Link to="/settings" title="Pengaturan & Profil">
+              <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center border-2 border-primary/20 cursor-pointer hover:scale-105 transition-transform">
+                <span className="text-sm font-bold text-primary">{userInitials}</span>
+              </div>
+            </Link>
           </div>
         </header>
 

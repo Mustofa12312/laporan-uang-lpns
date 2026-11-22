@@ -13,7 +13,10 @@ export default function Reports() {
   const [isLocked, setIsLocked] = useState(false);
   const [isApproved, setIsApproved] = useState(false);
   const [filterMonth, setFilterMonth] = useState("all");
-  const [filterYear, setFilterYear] = useState(new Date().getFullYear().toString());
+  const currentYearNum = new Date().getFullYear();
+  const [filterYear, setFilterYear] = useState(currentYearNum.toString());
+
+  const availableYears = [currentYearNum, currentYearNum - 1, currentYearNum - 2];
 
   const { transactions, activeBranch } = useStore();
 
@@ -152,12 +155,18 @@ export default function Reports() {
               <label className="text-xs font-medium text-muted-foreground mb-1 block">Tahun</label>
               <Select value={filterYear} onChange={(e) => setFilterYear(e.target.value)}>
                 <option value="all">Semua Tahun</option>
-                <option value="2026">2026</option>
-                <option value="2025">2025</option>
+                {availableYears.map(yr => (
+                  <option key={yr} value={yr.toString()}>{yr}</option>
+                ))}
               </Select>
             </div>
           </div>
-          <Button className="w-full sm:w-auto mt-5 sm:mt-0 shadow-md">Tampilkan</Button>
+          <Button 
+            className="w-full sm:w-auto mt-5 sm:mt-0 shadow-md"
+            onClick={() => toast.success(`Laporan periode ${periodName} ditampilkan`)}
+          >
+            Tampilkan
+          </Button>
         </CardContent>
       </Card>
 
@@ -205,13 +214,21 @@ export default function Reports() {
                   </tr>
                 </thead>
                 <tbody className="divide-y">
-                  {categoryRecap.map((item, i) => (
-                    <tr key={i} className="hover:bg-secondary/20 transition-colors">
-                      <td className="px-6 py-4 font-medium text-foreground">{item.name}</td>
-                      <td className="px-6 py-4 text-center">{item.transactions}</td>
-                      <td className="px-6 py-4 text-right font-semibold">{formatRupiah(item.amount)}</td>
+                  {categoryRecap.length === 0 ? (
+                    <tr>
+                      <td colSpan={3} className="px-6 py-8 text-center text-muted-foreground">
+                        Tidak ada transaksi pengeluaran pada periode {periodName}.
+                      </td>
                     </tr>
-                  ))}
+                  ) : (
+                    categoryRecap.map((item, i) => (
+                      <tr key={i} className="hover:bg-secondary/20 transition-colors">
+                        <td className="px-6 py-4 font-medium text-foreground">{item.name}</td>
+                        <td className="px-6 py-4 text-center">{item.transactions}</td>
+                        <td className="px-6 py-4 text-right font-semibold">{formatRupiah(item.amount)}</td>
+                      </tr>
+                    ))
+                  )}
                   <tr className="bg-primary/5 font-bold">
                     <td className="px-6 py-4 text-primary">TOTAL</td>
                     <td className="px-6 py-4 text-center text-primary">{totalTx}</td>
