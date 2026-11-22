@@ -71,12 +71,23 @@ export default function Settings() {
   const { 
     archives, 
     categories,
+    transactions,
+    activeBranch,
     budget, setBudget
   } = useStore();
+
+  // Balance calculations for current branch
+  const branchTransactions = transactions.filter(t => t.branch === activeBranch);
+  const currentIncome = branchTransactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
+  const currentExpense = branchTransactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
+  const currentBalance = currentIncome - currentExpense;
 
   // Income injection
   const [incomeTitle, setIncomeTitle] = useState("");
   const [incomeAmount, setIncomeAmount] = useState("");
+  const [incomeCategory, setIncomeCategory] = useState("");
+  const [incomeDate, setIncomeDate] = useState(new Date().toISOString().split('T')[0]);
+  const [isSubmittingIncome, setIsSubmittingIncome] = useState(false);
   
   const handleIncomeAmountChange = (e) => {
     const rawValue = e.target.value.replace(/\D/g, "");
@@ -85,6 +96,7 @@ export default function Settings() {
   
   // Close book
   const [periodName, setPeriodName] = useState("");
+  const [isClosingBook, setIsClosingBook] = useState(false);
 
   // Category management
   const [newCategoryName, setNewCategoryName] = useState("");
@@ -93,48 +105,87 @@ export default function Settings() {
 
   // Budget
   const [editBudget, setEditBudget] = useState(false);
-  const [budgetInput, setBudgetInput] = useState(budget.toString());
+  const [budgetInput, setBudgetInput] = useState(budget ? budget.toString() : "20000000");
+  const [isSavingBudget, setIsSavingBudget] = useState(false);
+
+  useEffect(() => {
+    if (!editBudget && budget !== undefined) {
+      setBudgetInput(budget.toString());
+    }
+  }, [budget, editBudget]);
   
   const handleBudgetInputChange = (e) => {
     const rawValue = e.target.value.replace(/\D/g, "");
     setBudgetInput(rawValue);
   };
 
-  const handleAddIncome = async () => {
-    if(!incomeTitle || !incomeAmount) return;
-    
+  const handleAddIncome = async (e) => {
+    e?.preventDefault();
+    if (!incomeTitle.trim()) {
+      toast.error("Mohon masukkan keterangan atau sumber dana");
+      return;
+    }
+    const parsedAmount = parseInt(incomeAmount);
+    if (!parsedAmount || parsedAmount <= 0) {
+      toast.error("Mohon masukkan nominal saldo yang valid");
+      return;
+    }
+
+    setIsSubmittingIncome(true);
     try {
+      const selectedCategory = incomeCategory.trim() || (categories.find(c => c.status === 'ACTIVE')?.name || "BMS dan Ranting");
+
       await addTransaction({
-        name: incomeTitle,
-        category: "BMS dan Ranting",
-        date: new Date().toISOString().split('T')[0],
-        amount: parseInt(incomeAmount),
+        name: incomeTitle.trim(),
+        category: selectedCategory,
+        date: incomeDate || new Date().toISOString().split('T')[0],
+        amount: parsedAmount,
         type: "income",
-        branch: "Pusat",
-        notes: "Injeksi dana manual dari pengaturan",
+        branch: activeBranch || "Pusat",
+        notes: "Injeksi dana manual dari pengaturan saldo",
         volume: 1,
         unit: "Paket",
-        unitPrice: parseInt(incomeAmount)
+        unitPrice: parsedAmount
       }, currentUser);
       
       setIncomeTitle("");
       setIncomeAmount("");
-      toast.success("Pemasukan berhasil ditambahkan ke saldo!");
+      toast.success("Saldo berhasil ditambahkan!");
     } catch (error) {
       console.error("Gagal tambah saldo:", error);
-      toast.error("Gagal menambahkan saldo");
+      toast.error(error.message || "Gagal menambahkan saldo");
+    } finally {
+      setIsSubmittingIncome(false);
     }
   };
 
   const handleCloseBook = async () => {
-    if(!periodName) return;
+    if (!periodName.trim()) {
+      toast.error("Mohon masukkan nama periode arsip");
+      return;
+    }
+
+    const activeTxCount = transactions.filter(t => t.status === 'ACTIVE').length;
+    if (activeTxCount === 0) {
+      toast.error("Tidak ada transaksi aktif untuk ditutup.");
+      return;
+    }
+
+    const confirmed = window.confirm(
+      `Apakah Anda yakin ingin melakukan Tutup Buku untuk "${periodName}"?\n\nSemua transaksi aktif saat ini (${activeTxCount} transaksi) akan diarsipkan dan saldo berjalan akan di-reset untuk periode baru.`
+    );
+    if (!confirmed) return;
+
+    setIsClosingBook(true);
     try {
-      await closeBook(periodName, currentUser);
+      await closeBook(periodName.trim(), currentUser);
       setPeriodName("");
       toast.success("Tutup Buku berhasil! Semua transaksi diarsipkan.");
     } catch (error) {
       console.error("Gagal tutup buku:", error);
       toast.error(error.message || "Gagal tutup buku");
+    } finally {
+      setIsClosingBook(false);
     }
   };
 
@@ -174,13 +225,22 @@ export default function Settings() {
   };
 
   const handleSaveBudget = async () => {
+    const parsedBudget = parseInt(budgetInput) || 0;
+    if (parsedBudget < 0) {
+      toast.error("Target anggaran tidak boleh negatif");
+      return;
+    }
+    setIsSavingBudget(true);
     try {
-      await updateGeneralSettings({ budget: parseInt(budgetInput) || 0 });
+      await updateGeneralSettings({ budget: parsedBudget });
+      setBudget(parsedBudget);
       setEditBudget(false);
       toast.success("Target anggaran berhasil diperbarui");
     } catch (error) {
       console.error("Gagal update budget:", error);
-      toast.error("Gagal update budget");
+      toast.error("Gagal update target anggaran");
+    } finally {
+      setIsSavingBudget(false);
     }
   };
 
@@ -202,28 +262,33 @@ export default function Settings() {
         <div className="w-full md:w-64 space-y-1">
           <Button 
             variant={activeTab === "profile" ? "secondary" : "ghost"} 
-            className="w-full justify-start font-medium"
+            className={cn("w-full justify-start font-medium", activeTab === "profile" && "bg-secondary font-semibold")}
             onClick={() => setActiveTab("profile")}
           >
             <User className="mr-2 h-4 w-4" /> Profil
           </Button>
           <Button 
             variant={activeTab === "categories" ? "secondary" : "ghost"} 
-            className="w-full justify-start font-medium"
+            className={cn("w-full justify-start font-medium", activeTab === "categories" && "bg-secondary font-semibold")}
             onClick={() => setActiveTab("categories")}
           >
             <Tag className="mr-2 h-4 w-4" /> Manajemen Kategori
           </Button>
           <Button 
             variant={activeTab === "balance" ? "secondary" : "ghost"} 
-            className="w-full justify-start font-medium text-green-600 dark:text-green-500"
+            className={cn(
+              "w-full justify-start font-medium",
+              activeTab === "balance" 
+                ? "bg-secondary text-green-600 dark:text-green-400 font-bold" 
+                : "text-muted-foreground hover:text-foreground"
+            )}
             onClick={() => setActiveTab("balance")}
           >
             <Wallet className="mr-2 h-4 w-4" /> Manajemen Saldo
           </Button>
           <Button 
             variant={activeTab === "preferences" ? "secondary" : "ghost"} 
-            className="w-full justify-start font-medium"
+            className={cn("w-full justify-start font-medium", activeTab === "preferences" && "bg-secondary font-semibold")}
             onClick={() => setActiveTab("preferences")}
           >
             <SettingsIcon className="mr-2 h-4 w-4" /> Preferensi & Tema
