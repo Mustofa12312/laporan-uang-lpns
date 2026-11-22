@@ -175,7 +175,7 @@ export default function Users() {
               </CardContent>
             </Card>
           </motion.div>
-        ))}
+        )))}
       </div>
 
       {/* Add/Edit User Modal */}
