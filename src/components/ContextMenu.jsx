@@ -37,8 +37,8 @@ export default function ContextMenu({
 
   // Ensure menu doesn't go off-screen
   const menuStyle = {
-    top: position.y,
-    left: position.x,
+    top: Math.min(position.y, (typeof window !== 'undefined' ? window.innerHeight : 800) - 220),
+    left: Math.min(position.x, (typeof window !== 'undefined' ? window.innerWidth : 1200) - 210),
   };
 
   return (
@@ -48,7 +48,7 @@ export default function ContextMenu({
       style={menuStyle}
     >
       <div className="px-3 py-1.5 text-xs font-semibold text-muted-foreground border-b mb-1 truncate">
-        {selectedItem.description || "Opsi Transaksi"}
+        {selectedItem.name || selectedItem.desc || selectedItem.description || "Opsi Transaksi"}
       </div>
       
       <button 

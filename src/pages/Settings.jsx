@@ -401,7 +401,7 @@ export default function Settings() {
                   </div>
 
                   <div className="space-y-3">
-                    {categories.map((cat) => (
+                    {categories.filter(c => c.status !== 'DELETED').map((cat) => (
                       <div key={cat.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-secondary/20 transition-colors">
                         <div className="flex items-center gap-3 flex-1">
                           <div className={`w-2 h-2 rounded-full ${cat.status === 'ACTIVE' ? 'bg-green-500' : 'bg-destructive'}`}></div>
@@ -445,7 +445,7 @@ export default function Settings() {
                             <Button 
                               variant="ghost" size="sm" 
                               className="text-xs text-destructive hover:bg-destructive/10 h-8 w-8 p-0"
-                              onClick={() => deleteCategory(cat.id)}
+                              onClick={() => handleDeleteCategory(cat.id, cat.name)}
                             >
                               <Trash2 className="w-4 h-4"/>
                             </Button>

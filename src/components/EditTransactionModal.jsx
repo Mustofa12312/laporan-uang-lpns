@@ -139,6 +139,9 @@ export default function EditTransactionModal({ isOpen, onClose, transaction }) {
                     <label className="text-xs font-medium text-muted-foreground">Kategori</label>
                     <Select required value={category} onChange={e => setCategory(e.target.value)}>
                       <option value="">Pilih</option>
+                      {category && !categories.some(c => c.status === 'ACTIVE' && c.name === category) && (
+                        <option value={category}>{category}</option>
+                      )}
                       {categories.filter(c => c.status === 'ACTIVE').map(cat => (
                         <option key={cat.id} value={cat.name}>{cat.name}</option>
                       ))}
