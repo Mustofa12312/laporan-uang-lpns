@@ -218,6 +218,17 @@ export default function Settings() {
     }
   };
 
+  const handleDeleteCategory = async (id, name) => {
+    if (!window.confirm(`Yakin ingin menghapus kategori "${name}"?`)) return;
+    try {
+      await deleteCategory(id);
+      toast.success(`Kategori "${name}" berhasil dihapus`);
+    } catch (error) {
+      console.error("Gagal menghapus kategori:", error);
+      toast.error("Gagal menghapus kategori");
+    }
+  };
+
   const handleSaveBudget = async () => {
     const parsedBudget = parseInt(budgetInput) || 0;
     if (parsedBudget < 0) {

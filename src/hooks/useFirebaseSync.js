@@ -33,7 +33,9 @@ export const useFirebaseSync = () => {
 
     // Listen to categories
     const categoriesUnsub = onSnapshot(collection(db, 'categories'), (snapshot) => {
-      const categoriesData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      const categoriesData = snapshot.docs
+        .map(doc => ({ id: doc.id, ...doc.data() }))
+        .filter(c => c.status !== 'DELETED');
       setCategories(categoriesData);
     });
 
