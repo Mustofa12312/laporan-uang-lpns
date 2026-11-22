@@ -459,97 +459,241 @@ export default function Settings() {
 
           {/* Balance Tab */}
           {activeTab === "balance" && (
-            <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}>
+            <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-6">
+              
+              {/* Ringkasan Saldo Kas Saat Ini */}
+              <Card className="border-0 shadow-sm bg-gradient-to-br from-primary/5 via-background to-secondary/30 border border-primary/20">
+                <CardHeader className="pb-3">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <CardTitle className="text-lg font-bold flex items-center gap-2 text-foreground">
+                      <Wallet className="w-5 h-5 text-primary" />
+                      Ringkasan Saldo Kas Berjalan
+                    </CardTitle>
+                    <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-primary/10 text-primary border border-primary/20 w-fit">
+                      Cabang: {activeBranch || "Pusat"}
+                    </span>
+                  </div>
+                  <CardDescription>
+                    Akumulasi pemasukan, pengeluaran, dan saldo kas aktif saat ini.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div className="p-3.5 bg-background/80 backdrop-blur rounded-lg border shadow-sm">
+                      <p className="text-xs text-muted-foreground font-medium">Saldo Kas Berjalan</p>
+                      <p className={cn("text-2xl font-black mt-1", currentBalance >= 0 ? "text-green-600 dark:text-green-400" : "text-destructive")}>
+                        {formatRupiah(currentBalance)}
+                      </p>
+                    </div>
+                    <div className="p-3.5 bg-background/80 backdrop-blur rounded-lg border shadow-sm">
+                      <p className="text-xs text-muted-foreground font-medium flex items-center gap-1">
+                        <TrendingUp className="w-3.5 h-3.5 text-green-600" /> Total Pemasukan
+                      </p>
+                      <p className="text-xl font-bold mt-1 text-green-600 dark:text-green-500">
+                        {formatRupiah(currentIncome)}
+                      </p>
+                    </div>
+                    <div className="p-3.5 bg-background/80 backdrop-blur rounded-lg border shadow-sm">
+                      <p className="text-xs text-muted-foreground font-medium flex items-center gap-1">
+                        <TrendingUp className="w-3.5 h-3.5 text-destructive rotate-180" /> Total Pengeluaran
+                      </p>
+                      <p className="text-xl font-bold mt-1 text-destructive">
+                        {formatRupiah(currentExpense)}
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
               {/* Budget Setting */}
-              <Card className="border-0 shadow-sm mb-6">
+              <Card className="border-0 shadow-sm">
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">💰 Target Anggaran</CardTitle>
-                  <CardDescription>Atur target anggaran pengeluaran untuk monitoring di Dashboard.</CardDescription>
+                  <CardTitle className="flex items-center gap-2">💰 Target Anggaran Pengeluaran</CardTitle>
+                  <CardDescription>Atur target anggaran pengeluaran untuk monitoring dan persentase di Dashboard.</CardDescription>
                 </CardHeader>
                 <CardContent>
                   {editBudget ? (
-                    <div className="flex gap-2">
+                    <div className="flex flex-col sm:flex-row gap-2">
                       <Input 
                         type="text" 
                         value={formatNumberDots(budgetInput)} 
                         onChange={handleBudgetInputChange} 
+                        placeholder="Contoh: 20.000.000"
+                        className="sm:max-w-xs"
                       />
-                      <Button onClick={handleSaveBudget}>Simpan</Button>
-                      <Button variant="outline" onClick={() => { setEditBudget(false); setBudgetInput(budget.toString()); }}>Batal</Button>
+                      <div className="flex gap-2">
+                        <Button onClick={handleSaveBudget} disabled={isSavingBudget}>
+                          {isSavingBudget ? "Menyimpan..." : "Simpan"}
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          disabled={isSavingBudget}
+                          onClick={() => { setEditBudget(false); setBudgetInput(budget ? budget.toString() : "20000000"); }}
+                        >
+                          Batal
+                        </Button>
+                      </div>
                     </div>
                   ) : (
                     <div className="flex items-center justify-between">
                       <span className="text-xl font-bold text-foreground">{formatRupiah(budget)}</span>
-                      <Button variant="outline" size="sm" onClick={() => setEditBudget(true)}>Ubah</Button>
+                      <Button variant="outline" size="sm" onClick={() => { setBudgetInput(budget ? budget.toString() : "20000000"); setEditBudget(true); }}>
+                        Ubah Target
+                      </Button>
                     </div>
                   )}
                 </CardContent>
               </Card>
 
+              {/* Injeksi Dana / Pemasukan Saldo */}
               <Card className="border-0 shadow-sm border-green-500/20">
                 <CardHeader>
-                  <CardTitle className="text-green-600 dark:text-green-500 flex items-center gap-2"><ArrowUpCircle className="w-5 h-5"/> Injeksi Dana (Pemasukan)</CardTitle>
-                  <CardDescription>Tambahkan saldo awal atau pemasukan dana BMS dan Ranting ke sistem.</CardDescription>
+                  <CardTitle className="text-green-600 dark:text-green-500 flex items-center gap-2">
+                    <ArrowUpCircle className="w-5 h-5"/> Injeksi Dana (Pemasukan Saldo)
+                  </CardTitle>
+                  <CardDescription>
+                    Tambahkan saldo awal atau pemasukan dana kas ke cabang {activeBranch || "Pusat"}.
+                  </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Sumber Dana / Keterangan</label>
-                    <Input placeholder="Misal: Pencairan Dana BMS" value={incomeTitle} onChange={(e) => setIncomeTitle(e.target.value)} />
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Keterangan / Sumber Dana *</label>
+                      <Input 
+                        placeholder="Misal: Saldo Awal / Pencairan Dana BMS" 
+                        value={incomeTitle} 
+                        onChange={(e) => setIncomeTitle(e.target.value)} 
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Kategori Pemasukan</label>
+                      <Select 
+                        value={incomeCategory} 
+                        onChange={(e) => setIncomeCategory(e.target.value)}
+                      >
+                        <option value="">-- Kategori (Default: BMS dan Ranting) --</option>
+                        {categories.filter(c => c.status === 'ACTIVE').map(cat => (
+                          <option key={cat.id} value={cat.name}>{cat.name}</option>
+                        ))}
+                      </Select>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Nominal Saldo (Rp) *</label>
+                      <Input 
+                        type="text" 
+                        placeholder="1.000.000" 
+                        value={formatNumberDots(incomeAmount)} 
+                        onChange={handleIncomeAmountChange} 
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Tanggal Transaksi</label>
+                      <Input 
+                        type="date" 
+                        value={incomeDate} 
+                        onChange={(e) => setIncomeDate(e.target.value)} 
+                      />
+                    </div>
+                  </div>
+                </CardContent>
+                <CardFooter>
+                  <Button 
+                    onClick={handleAddIncome} 
+                    disabled={isSubmittingIncome}
+                    className="bg-green-600 hover:bg-green-700 w-full sm:w-auto text-white"
+                  >
+                    {isSubmittingIncome ? "Menyimpan..." : "Tambahkan ke Saldo"}
+                  </Button>
+                </CardFooter>
+              </Card>
+
+              {/* Tutup Buku */}
+              <Card className="border-0 shadow-sm border-destructive/20">
+                <CardHeader>
+                  <CardTitle className="text-destructive flex items-center gap-2">
+                    <Archive className="w-5 h-5"/> Tutup Buku (Periode)
+                  </CardTitle>
+                  <CardDescription>
+                    Arsipkan transaksi saat ini dan kembalikan saldo berjalan ke 0 (Nol) untuk memulai pencatatan periode baru (Misal: Tutup Triwulan).
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-lg text-xs text-destructive space-y-1">
+                    <p className="font-semibold flex items-center gap-1">
+                      <AlertTriangle className="w-4 h-4 inline shrink-0" /> Perhatian:
+                    </p>
+                    <p>
+                      Tutup Buku akan mengarsipkan seluruh transaksi aktif saat ini. Transaksi yang diarsipkan tetap tersimpan di riwayat arsip tetapi tidak lagi mempengaruhi saldo kas berjalan yang baru.
+                    </p>
                   </div>
                   <div className="space-y-2">
-                    <label className="text-sm font-medium">Nominal (Rp)</label>
+                    <label className="text-sm font-medium">Nama Periode Arsip *</label>
                     <Input 
-                      type="text" 
-                      placeholder="1.000.000" 
-                      value={formatNumberDots(incomeAmount)} 
-                      onChange={handleIncomeAmountChange} 
+                      placeholder="Misal: Laporan Triwulan 1 (Jan - Mar 2026)" 
+                      value={periodName} 
+                      onChange={(e) => setPeriodName(e.target.value)} 
                     />
                   </div>
                 </CardContent>
                 <CardFooter>
-                  <Button onClick={handleAddIncome} className="bg-green-600 hover:bg-green-700 w-full sm:w-auto text-white">Tambahkan ke Saldo</Button>
+                  <Button 
+                    onClick={handleCloseBook} 
+                    variant="destructive" 
+                    disabled={isClosingBook}
+                    className="w-full sm:w-auto"
+                  >
+                    {isClosingBook ? "Memproses Tutup Buku..." : "Tutup Buku & Reset Data"}
+                  </Button>
                 </CardFooter>
               </Card>
 
-              <Card className="border-0 shadow-sm border-destructive/20 mt-6">
+              {/* Arsip Laporan */}
+              <Card className="border-0 shadow-sm">
                 <CardHeader>
-                  <CardTitle className="text-destructive flex items-center gap-2">Tutup Buku (Periode)</CardTitle>
+                  <CardTitle className="flex items-center gap-2">
+                    <Archive className="w-5 h-5 text-primary" /> Arsip Laporan Periode
+                  </CardTitle>
                   <CardDescription>
-                    Arsipkan transaksi saat ini dan kembalikan saldo ke 0 (Nol) untuk memulai pencatatan periode baru (Misal: Tutup Triwulan).
+                    Daftar periode pembukuan yang telah ditutup.
                   </CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Nama Periode Arsip</label>
-                    <Input placeholder="Misal: Laporan Triwulan 1 (Jan - Mar 2026)" value={periodName} onChange={(e) => setPeriodName(e.target.value)} />
-                  </div>
-                </CardContent>
-                <CardFooter>
-                  <Button onClick={handleCloseBook} variant="destructive" className="w-full sm:w-auto">Tutup Buku & Reset Data</Button>
-                </CardFooter>
-              </Card>
-
-              {archives && archives.length > 0 && (
-                <Card className="border-0 shadow-sm mt-6">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">Arsip Laporan</CardTitle>
-                    <CardDescription>
-                      Daftar periode yang telah ditutup.
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    {archives.map(archive => (
-                      <div key={archive.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 border rounded-lg bg-secondary/10">
+                <CardContent className="space-y-3">
+                  {archives && archives.length > 0 ? (
+                    archives.map(archive => (
+                      <div key={archive.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 border rounded-lg bg-secondary/10 gap-3">
                         <div>
-                          <h4 className="font-bold text-foreground">{archive.periodName}</h4>
-                          <p className="text-xs text-muted-foreground mt-1">Ditutup pada: {new Date(archive.closedAt).toLocaleDateString('id-ID')}</p>
-                          <p className="text-xs font-medium text-primary mt-1">{archive.transactions.length} Transaksi Tersimpan</p>
+                          <h4 className="font-bold text-foreground text-base">{archive.periodName}</h4>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Ditutup pada: {archive.closedAt ? new Date(archive.closedAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : "-"} {archive.closedByName ? `oleh ${archive.closedByName}` : ""}
+                          </p>
+                          <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2 text-xs">
+                            <span className="font-medium text-primary">
+                              {(archive.transactionCount ?? archive.transactions?.length ?? 0)} Transaksi Tersimpan
+                            </span>
+                            {archive.totalIncome !== undefined && (
+                              <span className="text-green-600 dark:text-green-400 font-medium">
+                                Masuk: {formatRupiah(archive.totalIncome)}
+                              </span>
+                            )}
+                            {archive.totalExpense !== undefined && (
+                              <span className="text-destructive font-medium">
+                                Keluar: {formatRupiah(archive.totalExpense)}
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </div>
-                    ))}
-                  </CardContent>
-                </Card>
-              )}
+                    ))
+                  ) : (
+                    <div className="text-center py-6 text-muted-foreground text-sm border border-dashed rounded-lg">
+                      Belum ada riwayat periode tutup buku.
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
             </motion.div>
           )}
 
